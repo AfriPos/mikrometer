@@ -18,9 +18,13 @@ return new class extends Migration
             $table->date('invoiced_till');
             $table->string('pppoe_login');
             $table->string('pppoe_password');
+            $table->string('local_address');
+            $table->string('remote_address');
             $table->string('status');
             $table->unsignedBigInteger('customer_id')->nullable();
             $table->foreign('customer_id')->references('id')->on('customers');
+            $table->unsignedBigInteger('profile_id')->nullable();
+            $table->foreign('profile_id')->references('id')->on('pppoe_profiles');
             $table->timestamps();
         });
     }

@@ -14,8 +14,6 @@ return new class extends Migration
         Schema::create('pppoe_profiles', function (Blueprint $table) {
             $table->id();
             $table->string('profile_name');
-            $table->string('local_address');
-            $table->string('remote_address');
             $table->string('rate_limit');
         });
     }

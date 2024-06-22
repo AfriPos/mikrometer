@@ -78,14 +78,35 @@
                                 <select class="form-control" id="interface" name="interface">
                                     <option value="">Select Interface</option>
                                 </select>
-                                <label for="interface">Interface:</label>
+                                <label for="interface">Interface</label>
                             </div>
-
 
                             <div class="form-floating mb-3">
                                 <input type="text" class="form-control" id="service_name" name="service_name"
                                     placeholder="">
-                                <label for="service_name">Service Name:</label>
+                                <label for="service_name">Service Name</label>
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <input type="number" class="form-control" id="service_price" name="service_price"
+                                    placeholder="">
+                                <label for="service_price">Service Price</label>
+                            </div>
+
+                            <div class="form-floating mb-3 d-flex">
+                                <input type="number" class="form-control" id="servie_duration" name="servie_duration"
+                                    placeholder="">
+                                <label for="servie_duration" class="ms-2">Service Duration</label>
+                                <div class="input-group-append ms-2 form-floating">
+                                    <select class="form-control" id="servie_duration_unit" name="servie_duration_unit">
+                                        <option value="minutes">Minute</option>
+                                        <option value="hours">Hour</option>
+                                        <option value="days">Day</option>
+                                        <option value="weeks">Week</option>
+                                        <option value="months">Month</option>
+                                        <option value="years">Year</option>
+                                    </select>
+                                </div>
                             </div>
 
                             <div class="form-floating mb-3 d-flex">

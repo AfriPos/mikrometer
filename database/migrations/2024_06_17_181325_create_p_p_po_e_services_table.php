@@ -18,6 +18,8 @@ return new class extends Migration
             $table->integer('max_mtu');
             $table->integer('max_mru');
             $table->string('service_price');
+            $table->integer('service_duration');
+            $table->string('duration_unit');
             $table->unsignedBigInteger('profile_id');
             $table->string('disabled');
             $table->foreign('profile_id')->references('id')->on('pppoe_profiles');

@@ -110,7 +110,6 @@
                                     </div>
                                 </div>
 
-
                                 <div class="table-responsive">
                                     <table class="table align-items-center mb-0">
                                         <thead>
@@ -119,6 +118,7 @@
                                             <th>Start Date</th>
                                             <th>End Date</th>
                                             <th>Invoiced Until</th>
+                                            <th>IP Address</th>
                                             <th>Action</th>
                                         </thead>
                                         <tbody>
@@ -132,6 +132,7 @@
                                                     <td>{{ $service->start_date }}</td>
                                                     <td>{{ $service->end_date }}</td>
                                                     <td>{{ $service->invoiced_till }}</td>
+                                                    <td>{{ $ipaddress->ip_address }}</td>
                                                     <td>
                                                         <div class="btn-group" role="group"
                                                             aria-label="Basic example">
@@ -170,15 +171,15 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><i
                         class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="modal-body">
-                <form method="POST" action="{{ route('service.store', ['customer' => $customer->id]) }}">
+            <form method="POST" action="{{ route('service.store', ['customer' => $customer->id]) }}">
+                <div class="modal-body">
                     @csrf
                     <div class="form-group">
                         <label for="service">Select Plan</label>
                         <select class="form-control" id="service" name="service" required>
                             <option value="">Select Service</option>
                             @foreach ($pppoeprofiles as $pppoeprofile)
-                                <option value="{{ $pppoeprofile->profile_name }}">
+                                <option value="{{ $pppoeprofile->id }}">
                                     {{ $pppoeprofile->profile_name }}
                                 </option>
                             @endforeach
@@ -193,20 +194,19 @@
 
                     <div class="form-floating mb-3 d-flex">
                         <input type="text" id="pppoe_password" name="pppoe_password" class="form-control"
-                            placeholder="" required>
+                            placeholder="" required autocomplete="off">
                         <label for="pppoe_password" class="m2-2">PPPoE Password</label>
                         <div class="input-group-append ms-2 form-floating">
                             <button type="button" class="form-control btn btn-outline-primary"
                                 onclick="generatePassword()">Generate</button>
                         </div>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer d-flex justify-content-between">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="submit" class="btn btn-primary">Create</button>
-            </div>
-
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

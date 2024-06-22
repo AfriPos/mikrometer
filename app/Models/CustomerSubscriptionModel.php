@@ -17,5 +17,8 @@ class CustomerSubscriptionModel extends Model
         'pppoe_password',
         'pppoe_login',
         'status',
+        'local_address',
+        'remote_address',
+        'customer_id',
     ];
 }

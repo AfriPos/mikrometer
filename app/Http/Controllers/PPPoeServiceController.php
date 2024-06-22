@@ -47,6 +47,9 @@ class PPPoeServiceController extends Controller
                 'ip_address' => 'required|ip',
                 'interface' => 'required|string',
                 'service_name' => 'required|string',
+                'service_price' => 'required|integer',
+                'servie_duration' => 'required|numeric',
+                'servie_duration_unit' => 'required|string|in:minutes,hours,days,weeks,months,years',
                 'rate_download' => 'required|numeric',
                 'rate_download_unit' => 'required|string|in:kbps,mbps,gbps',
                 'rate_upload' => 'required|numeric',
@@ -67,7 +70,7 @@ class PPPoeServiceController extends Controller
 
             // Connect to the RouterOS
             if ($api->connect($request->ip_address, $routerCredential['login'], $routerCredential['password'])) {
-                // try {
+                try {
                     // Create the PPP profile with additional parameters
                     $pppoe_profile = $api->comm('/ppp/profile/add', [
                         'name' => $validated['service_name'],
@@ -101,17 +104,22 @@ class PPPoeServiceController extends Controller
                     $pppoe = new PPPoeService();
                     $pppoe->interface = $request->interface;
                     $pppoe->service_name = $request->service_name;
+                    $pppoe->service_price = $request->service_price;
+                    $pppoe->service_duration = $request->servie_duration;
+                    $pppoe->duration_unit = $request->servie_duration_unit;
                     $pppoe->max_mtu = 1480;
                     $pppoe->max_mru = 1480;
                     $pppoe->profile_id = $pppoeprofile->id;
                     $pppoe->disabled = $request->status;
                     $pppoe->save();
 
-                //     return redirect()->back()->with('success', 'PPPoE service created successfully!');
-                // } catch (\Throwable $e) {
-                //     DB::rollBack();
-                //     return redirect()->back()->with('error', 'Failed to create PPPoE service!');
-                // }
+                    DB::commit();
+
+                    return redirect()->back()->with('success', 'PPPoE service created successfully!');
+                } catch (\Throwable $e) {
+                    DB::rollBack();
+                    return response()->json(['error' => 'Failed to create PPPoE service!', $e->getMessage()], 500);
+                }
             } else {
                 DB::rollBack();
                 return redirect()->back()->with('error', 'Failed to connect to the router!');
@@ -174,4 +182,3 @@ class PPPoeServiceController extends Controller
         }
     }
 }
-

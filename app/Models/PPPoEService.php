@@ -10,8 +10,7 @@ class PPPoEService extends Model
     use HasFactory;
 
     protected $table = 'pppoe_services';
-    public $timestamps = false; 
-
+    public $timestamps = false;
     protected $fillable = [
         'interface',
         'service_name',
@@ -19,8 +18,11 @@ class PPPoEService extends Model
         'max_mru',
         'profile_id',
         'disabled',
+        'service_duration',
+        'duration_unit',
+        'service_price',
     ];
-    
+
     public function profile()
     {
         return $this->belongsTo(PPPoEProfile::class);

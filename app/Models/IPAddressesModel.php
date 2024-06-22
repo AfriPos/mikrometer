@@ -5,13 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class PPPoEProfile extends Model
+class IPAddressesModel extends Model
 {
     use HasFactory;
-    protected $table = 'pppoe_profiles';
-    public $timestamps = false; 
+    protected $table = 'ip_addresses';
     protected $fillable = [
-        'profile_name',
-        'rate_limit',
+        'ip_address',
+        'is_used',
+        'customer_id',
+        'allocated_at',
+        'usable',
     ];
 }

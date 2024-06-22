@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -19,6 +18,12 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'craigjohnson2402@gmail.com',
             'password' => 'password@123'
+        ]);
+        
+        // Call additional seeders
+        $this->call([
+            RoutersSeeder::class,
+            IpAddressesSeeder::class,
         ]);
     }
 }
