@@ -1,0 +1,166 @@
+<x-app-layout>
+    <div class="container-fluid p-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card mb-4">
+                    <div class="card-header pb-0">
+                        <h3>Create PPPoE Service</h3>
+                    </div>
+                    <div class="card-body p-3">
+                        <form action="{{ route('pppoe.store') }}" method="POST">
+                            @if (session('success'))
+                                <script>
+                                    const Toast = Swal.mixin({
+                                        toast: true,
+                                        position: 'top-end',
+                                        showConfirmButton: false,
+                                        timer: 3000,
+                                        timerProgressBar: true,
+                                        didOpen: (toast) => {
+                                            toast.addEventListener('mouseenter', Swal.stopTimer)
+                                            toast.addEventListener('mouseleave', Swal.resumeTimer)
+                                        }
+                                    })
+
+                                    Toast.fire({
+                                        icon: 'success',
+                                        title: '{{ session('success') }}'
+                                    })
+                                </script>
+                            @endif
+
+                            @if (session('error'))
+                                <script>
+                                    const Toast = Swal.mixin({
+                                        toast: true,
+                                        position: 'top-end',
+                                        showConfirmButton: false,
+                                        timer: 3000,
+                                        timerProgressBar: true,
+                                        didOpen: (toast) => {
+                                            toast.addEventListener('mouseenter', Swal.stopTimer)
+                                            toast.addEventListener('mouseleave', Swal.resumeTimer)
+                                        }
+                                    })
+
+                                    Toast.fire({
+                                        icon: 'error',
+                                        title: '{{ session('error') }}'
+                                    })
+                                </script>
+                            @endif
+
+                            @csrf
+                            <div class="form-group">
+                                <label>Status:</label><br>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="status" value="no"
+                                        checked>
+                                    <label class="form-check-label">Active</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="status" value="yes">
+                                    <label class="form-check-label">Inactive</label>
+                                </div>
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <select class="form-control" id="ip_address" name="ip_address">
+                                    <option value="">Select router</option>
+                                    @foreach ($routers as $router)
+                                        <option value="{{ $router->ip_address }}">{{ $router->identity }}</option>
+                                    @endforeach
+                                </select>
+                                <label for="ip_address">Router</label>
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <select class="form-control" id="interface" name="interface">
+                                    <option value="">Select Interface</option>
+                                </select>
+                                <label for="interface">Interface:</label>
+                            </div>
+
+
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="service_name" name="service_name"
+                                    placeholder="">
+                                <label for="service_name">Service Name:</label>
+                            </div>
+
+                            <div class="form-floating mb-3 d-flex">
+                                <input type="number" class="form-control" id="rate_download" name="rate_download"
+                                    placeholder="Rate Download">
+                                <label for="rate_download" class="ms-2">Rate Download</label>
+                                <div class="input-group-append ms-2 form-floating">
+                                    <select class="form-control" id="rate_download_unit" name="rate_download_unit">
+                                        <option value="kbps">kbps</option>
+                                        <option value="mbps">mbps</option>
+                                        <option value="gbps">gbps</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-floating mb-3 d-flex">
+                                <input type="number" class="form-control" id="rate_upload" name="rate_upload"
+                                    placeholder="Rate Upload">
+                                <label for="rate_upload" class="ms-2">Rate Upload</label>
+                                <div class="input-group-append ms-2 form-floating">
+                                    <select class="form-control" id="rate_upload_unit" name="rate_upload_unit">
+                                        <option value="kbps">kbps</option>
+                                        <option value="mbps">mbps</option>
+                                        <option value="gbps">gbps</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 col-6 mx-auto">
+                                <button type="submit" class="btn btn-primary">Create PPPoE Service</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</x-app-layout>
+
+<script>
+    document.getElementById('ip_address').addEventListener('change', function() {
+        var ipAddress = this.value;
+        var interfaceSelect = document.getElementById('interface');
+
+        // Clear the interface dropdown
+        interfaceSelect.innerHTML = '<option value="">Select Interface</option>';
+
+        if (ipAddress) {
+            fetch('{{ route('fetch.interfaces') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        ip_address: ipAddress
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        data.interfaces.forEach(function(interface) {
+                            var option = document.createElement('option');
+                            option.value = interface.name;
+                            option.textContent = interface.name;
+                            interfaceSelect.appendChild(option);
+                        });
+                    } else {
+                        alert('Failed to fetch interfaces');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching interfaces:', error);
+                    alert('Failed to fetch interfaces');
+                });
+        }
+    });
+</script>
