@@ -15,5 +15,7 @@ class IPAddressesModel extends Model
         'customer_id',
         'allocated_at',
         'usable',
+        'pool_id',
     ];
 }
+

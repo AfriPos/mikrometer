@@ -66,7 +66,7 @@ class PPPoeServiceController extends Controller
             $rate_upload = $this->apendParameter($validated['rate_upload'], $validated['rate_upload_unit']);
 
             // fetch router login credentials
-            $routerCredential = RouterCredential::first();
+            $routerCredential = RouterCredential::where('ip_address', $request->ip_address)->first();
 
             // Connect to the RouterOS
             if ($api->connect($request->ip_address, $routerCredential['login'], $routerCredential['password'])) {

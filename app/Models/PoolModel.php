@@ -12,8 +12,8 @@ class PoolModel extends Model
     protected $table = 'ip_pools';
 
     protected $fillable = [
+        'id',
         'name',
-        'ranges',
-        'router',
+        'network',
     ];
 }

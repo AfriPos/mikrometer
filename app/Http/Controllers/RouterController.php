@@ -34,28 +34,32 @@ class RouterController extends Controller
         $api = new RouterosAPI();
 
         // Fetch router login credentials
-        $routerCredential = RouterCredential::first();
+        $routerCredential = RouterCredential::where('ip_address', $request->ip_address)->first();
+        try {
+            // Attempt to connect to the RouterOS
+            if ($api->connect($request->ip_address, $routerCredential->login, $routerCredential->password)) {
+                // Fetch interfaces
+                $api->write('/interface/print');
+                $interfaces = $api->read();
 
-        // Attempt to connect to the RouterOS
-        if ($api->connect($request->ip_address, $routerCredential->login, $routerCredential->password)) {
-            // Fetch interfaces
-            $api->write('/interface/print');
-            $interfaces = $api->read();
+                // Disconnect from the router
+                $api->disconnect();
 
-            // Disconnect from the router
-            $api->disconnect();
-
-            // Return the interfaces as JSON response
-            return response()->json([
-                'success' => true,
-                'interfaces' => $interfaces,
-            ]);
-        } else {
+                // Return the interfaces as JSON response
+                return response()->json([
+                    'success' => true,
+                    'interfaces' => $interfaces,
+                ]);
+            }
+            //  else {
+            // }
+        } catch (\Throwable $th) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to connect to the router.',
+                'message' => 'Failed to connect to the router.' . $th->getMessage(),
             ]);
         }
+
     }
 
 

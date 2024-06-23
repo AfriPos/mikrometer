@@ -12,14 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('ip_pools', function (Blueprint $table) {
-            $table->id();
+            $table->string('id')->primary();
             $table->string('name');
-            $table->string('ranges');
-            $table->string('router');
+            $table->string('network');
             $table->timestamps();
         });
     }
-
+    public $incrementing = false; // This ensures that the ID is not auto-incrementing
+    protected $keyType = 'string'; // This sets the primary key type to string
     /**
      * Reverse the migrations.
      */
