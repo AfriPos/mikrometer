@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
         // Call additional seeders
         $this->call([
             RoutersSeeder::class,
-            IpAddressesSeeder::class,
+            // IpAddressesSeeder::class,
         ]);
     }
 }

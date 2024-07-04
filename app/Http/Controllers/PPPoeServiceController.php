@@ -54,11 +54,6 @@ class PPPoeServiceController extends Controller
                 'rate_download_unit' => 'required|string|in:kbps,mbps,gbps',
                 'rate_upload' => 'required|numeric',
                 'rate_upload_unit' => 'required|string|in:kbps,mbps,gbps',
-                // 'burst_limit' => 'required|string',
-                // 'burst_threshold' => 'required|string',
-                // 'burst_time' => 'required|integer',
-                // 'priority' => 'required|integer',
-                // 'limit_at' => 'required|string',
             ]);
 
             // Convert rates to kbps
@@ -75,11 +70,6 @@ class PPPoeServiceController extends Controller
                     $pppoe_profile = $api->comm('/ppp/profile/add', [
                         'name' => $validated['service_name'],
                         'rate-limit' => "$rate_download/$rate_upload",
-                        // 'burst-limit' => $validated['burst_limit'],
-                        // 'burst-threshold' => $validated['burst_threshold'],
-                        // 'burst-time' => $validated['burst_time'],
-                        // 'priority' => $validated['priority'],
-                        // 'limit-at' => $validated['limit_at'],
                     ]);
                     // Create the PPPoE server interface
                     $pppoe_server = $api->comm('/interface/pppoe-server/server/add', [
@@ -133,9 +123,22 @@ class PPPoeServiceController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(PPPoeService $pPPoeService)
+    public function show(Request $request)
     {
-        //
+        $service = PPPoEService::where('id', $request->serviceId)->first();
+
+        if ($service) {
+            // Return the JSON response
+            return response()->json([
+                'success' => true,
+                'service' => $service,
+            ]);
+        } else {
+            // Return the JSON response
+            return response()->json([
+                'success' => false,
+            ]);
+        }
     }
 
     /**

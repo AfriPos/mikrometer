@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CustomerModel;
 use App\Models\CustomerSubscriptionModel;
+use App\Models\PPPoEService;
 use App\Models\RouterCredential;
 use App\MyHelper\RouterosAPI;
 use Illuminate\Http\Request;
@@ -32,27 +33,31 @@ class CustomerSubscriptionController extends Controller
      */
     public function store(Request $request, $customerId)
     {
-        try {
-            // Fetch customer details
-            $customer = CustomerModel::findOrFail($customerId);
+        // begin transaction
+        DB::beginTransaction();
 
+        try {
             // Validate form data
             $request->validate([
                 'service' => 'required|string|max:255',
+                'serviceippool' => 'required|string|max:255',
                 'pppoe_login' => 'required|string|max:255',
                 'pppoe_password' => 'required|string|max:255',
+                'service_price' => 'required|integer',
             ]);
 
-            $this->releaseIpAddress($customerId);
             $allocatedIp = $this->allocateIpAddress($customerId);
+            $network = $request->input('serviceippool');
+            $networkip = $this->getNetworkIp($network);
 
             // Create subscription
             $subscription = new CustomerSubscriptionModel();
-            $subscription->profile_id = $request->input('service');
+            $subscription->pppoe_id = $request->input('service');
             $subscription->pppoe_login = $request->input('pppoe_login');
             $subscription->pppoe_password = $request->input('pppoe_password');
-            $subscription->local_address = $allocatedIp['local_address'];
-            $subscription->remote_address = $allocatedIp['ip_address'];
+            $subscription->service_price = $request->input('service_price');
+            $subscription->local_address = $networkip;
+            $subscription->remote_address = $allocatedIp;
             $subscription->customer_id = $customerId;
             $subscription->start_date = now();
             $subscription->end_date = now()->addMonth(); // Example for a 1-month duration
@@ -60,25 +65,43 @@ class CustomerSubscriptionController extends Controller
             $subscription->status = 'active';
             $subscription->save();
 
+            DB::commit();
 
-            return response()->json(['success' => 'Service created and activated successfully.']);
+            // return response()->json(['success' => 'Service created and activated successfully.']);
+            return redirect()->back()->with('success', 'Service created and activated successfully.');
         } catch (\Throwable $th) {
-            return response()->json(['error' => $th->getMessage()], 500);
+            DB::rollBack();
+            dd($th->getMessage());
+            // return response()->json(['error' => $th->getMessage()], 500);
         }
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(CustomerSubscriptionModel $customerSubscriptionModel)
+    public function show(Request $request)
     {
-        //
+        try {
+            $subscription = CustomerSubscriptionModel::where('id', $request->subscriptionid)->first();
+
+            // Return the JSON response
+            return response()->json([
+                'success' => true,
+                'subscription' => $subscription,
+            ]);
+        } catch (\Throwable $th) {
+            // Return the JSON response
+            return response()->json([
+                'success' => false,
+                'error' => $th->getMessage(),
+            ]);
+        }
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(CustomerSubscriptionModel $customerSubscriptionModel)
+    public function edit(CustomerSubscriptionModel $subscriptionid)
     {
         //
     }
@@ -86,7 +109,7 @@ class CustomerSubscriptionController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, CustomerSubscriptionModel $customerSubscriptionModel)
+    public function update(Request $request, CustomerSubscriptionModel $subscriptionid)
     {
         //
     }
@@ -94,12 +117,18 @@ class CustomerSubscriptionController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(CustomerSubscriptionModel $customerSubscriptionModel)
+    public function destroy(CustomerSubscriptionModel $subscriptionid)
     {
-        //
+        // Release IP addresses assigned to the customer
+        $this->releaseIpAddress($subscriptionid->customer->id);
+
+        // Delete the customer subscription
+        $subscriptionid->delete();
+
+        return redirect()->back()->with('success', 'Customer subscription deleted successfully!');
     }
 
-
+    // allocates an ip to a customer
     private function allocateIpAddress($customerId)
     {
         $ipAddress = DB::table('ip_addresses')
@@ -107,10 +136,6 @@ class CustomerSubscriptionController extends Controller
             ->where('usable', true)
             ->first();
 
-        $localipAddress = DB::table('ip_addresses')
-            ->where('is_used', false)
-            ->orderBy('id')
-            ->first();
 
         if ($ipAddress) {
             DB::table('ip_addresses')
@@ -121,17 +146,13 @@ class CustomerSubscriptionController extends Controller
                     'allocated_at' => now()
                 ]);
 
-            $iparray = array(
-                'ip_address' => $ipAddress->ip_address,
-                'local_address' => $localipAddress->ip_address,
-            );
-
-            return $iparray;
+            return $ipAddress->ip_address;
         }
 
         return null; // No available IP address
     }
 
+    // releases all ips assinged to a customer
     private function releaseIpAddress($customerId)
     {
         DB::table('ip_addresses')
@@ -141,5 +162,25 @@ class CustomerSubscriptionController extends Controller
                 'customer_id' => null,
                 'allocated_at' => null
             ]);
+    }
+
+    // gets the network ip from a given subnet
+    private function getNetworkIp($cidr)
+    {
+        list($ip, $prefixLength) = explode('/', $cidr);
+
+        // Convert IP address to a long integer
+        $ipLong = ip2long($ip);
+
+        // Create the subnet mask
+        $subnetMask = ~((1 << (32 - $prefixLength)) - 1);
+
+        // Calculate the network address
+        $network = $ipLong & $subnetMask;
+
+        // Convert the network address back to an IP address
+        $networkIp = long2ip($network);
+
+        return $networkIp;
     }
 }

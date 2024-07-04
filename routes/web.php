@@ -44,6 +44,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/pppoe/{id}/edit', [PPPoEServiceController::class, 'edit'])->name('pppoe.edit');
     Route::put('/admin/pppoe/{id}', [PPPoEServiceController::class, 'update'])->name('pppoe.update');
     Route::delete('/admin/pppoe/{id}', [PPPoEServiceController::class, 'destroy'])->name('pppoe.destroy');
+    Route::post('/fetch-service', [PPPoEServiceController::class, 'show'])->name('pppoe.show');
 
 
     // Customers
@@ -58,9 +59,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/service', [CustomerSubscriptionController::class, 'index'])->name('service.index');
     Route::get('/admin/service/create', [CustomerSubscriptionController::class, 'create'])->name('service.create');
     Route::post('/admin/service/{customer}', [CustomerSubscriptionController::class, 'store'])->name('service.store');
-    Route::get('/admin/service/{id}/edit', [CustomerSubscriptionController::class, 'edit'])->name('service.edit');
-    Route::put('/admin/service/{id}', [CustomerSubscriptionController::class, 'update'])->name('service.update');
-    Route::delete('/admin/service/{id}', [CustomerSubscriptionController::class, 'destroy'])->name('service.destroy');
+    Route::get('/admin/service/{subscriptionid}/edit', [CustomerSubscriptionController::class, 'edit'])->name('service.edit');
+    Route::put('/admin/service/{subscriptionid}', [CustomerSubscriptionController::class, 'update'])->name('service.update');
+    Route::delete('/admin/service/{subscriptionid}', [CustomerSubscriptionController::class, 'destroy'])->name('service.destroy');
+    Route::post('/fetch-subscription', [CustomerSubscriptionController::class, 'show'])->name('service.show');
+    
 
 
 

@@ -62,10 +62,51 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" aria-current="page" href="javascript:;"
-                                    onclick="changeActive(this, 'tab3')">Tab 3</a>
+                                    onclick="changeActive(this, 'billing')">Billing</a>
+                            </li>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" aria-current="page" href="javascript:;"
+                                    onclick="changeActive(this, 'statistics')">Statistics</a>
                             </li>
                         </ul>
                         <div id="info" class="tab-content active">
+                            <div
+                                class="rounded-2 mt-2 ps-3 pe-3 pt-3 d-flex justify-content-between bg-secondary-subtle text-secondary-emphasis">
+                                <div >Account balance</div>
+                                <div>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-secondary dropdown-toggle" type="button"
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                            Action
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#">Create message</a></li>
+                                            <li><a class="dropdown-item" href="#">Send message</a></li>
+                                        </ul>
+                                    </div>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-secondary dropdown-toggle" type="button"
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                            Tasks
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#">Create</a></li>
+                                            <li><a class="dropdown-item" href="#">List of tasks</a></li>
+                                        </ul>
+                                    </div>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-secondary dropdown-toggle" type="button"
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                            Tickets
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="#">Create</a></li>
+                                            <li><a class="dropdown-item" href="#">List of tickets</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
                             <form class="pt-3" action="{{ route('customer.update', $customer->id) }}" method="POST">
                                 @method('PUT')
                                 @csrf
@@ -114,7 +155,7 @@
                                     <table class="table align-items-center mb-0">
                                         <thead>
                                             <th>Status</th>
-                                            <th>Profile</th>
+                                            <th>Service</th>
                                             <th>Start Date</th>
                                             <th>End Date</th>
                                             <th>Invoiced Until</th>
@@ -128,7 +169,7 @@
                                                         <span
                                                             class="badge {{ $service->status == 'active' ? 'badge-sm bg-gradient-success' : 'badge-sm bg-gradient-secondary' }}">{{ $service->status }}</span>
                                                     </td>
-                                                    <td>{{ $service->profile_name }}</td>
+                                                    <td>{{ $service->pppoeservice->profile->profile_name }}</td>
                                                     <td>{{ $service->start_date }}</td>
                                                     <td>{{ $service->end_date }}</td>
                                                     <td>{{ $service->invoiced_till }}</td>
@@ -138,9 +179,13 @@
                                                             aria-label="Basic example">
                                                             <a class="btn badge-sm bg-gradient-secondary"
                                                                 data-bs-toggle="modal"
-                                                                data-bs-target="#editcustomerservice">Edit</a>
+                                                                data-bs-target="#editcustomerservice"
+                                                                onclick="fetchSubscription({{ $service->id }})">Edit</a>
                                                             <a class="btn badge-sm bg-gradient-secondary"
-                                                                href="/service/{{ $service->id }}">Delete</a>
+                                                                href="#"
+                                                                onclick="confirmDelete(event, '{{ route('service.destroy', $service->id) }}')">
+                                                                <i class="fa fa-times"></i>
+                                                            </a>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -150,9 +195,13 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="tab3" class="tab-content" style="display: none;">
+                        <div id="billing" class="tab-content" style="display: none;">
                             <h3>Content for Tab 3</h3>
-                            <p>This is the content for the third tab.</p>
+                            <p>This is the content for the Billing.</p>
+                        </div>
+                        <div id="statistics" class="tab-content" style="display: none;">
+                            <h3>Content for Tab 3</h3>
+                            <p>This is the content for the statistics.</p>
                         </div>
                     </div>
                 </div>
@@ -167,29 +216,49 @@
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h1 class="modal-title fs-5" id="staticBackdropLabel">Edit Service</h1>
+                <h1 class="modal-title fs-5" id="staticBackdropLabel">Create Service</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><i
                         class="fa-solid fa-xmark"></i></button>
             </div>
             <form method="POST" action="{{ route('service.store', ['customer' => $customer->id]) }}">
                 <div class="modal-body">
                     @csrf
-                    <div class="form-group">
-                        <label for="service">Select Plan</label>
-                        <select class="form-control" id="service" name="service" required>
+                    <div class="form-floating mb-3 d-flex">
+                        <select class="form-control" id="service" name="service" required
+                            onchange="logSelectedOption(this)">
                             <option value="">Select Service</option>
                             @foreach ($pppoeprofiles as $pppoeprofile)
-                                <option value="{{ $pppoeprofile->id }}">
+                                <option value="{{ $pppoeprofile->id }}"
+                                    @if ($customer->pppoeprofile_id == $pppoeprofile->id) selected @endif>
                                     {{ $pppoeprofile->profile_name }}
                                 </option>
                             @endforeach
                         </select>
+                        <label for="service">Select Service</label>
                     </div>
 
-                    <div class="form-group">
-                        <label for="pppoe_login">PPPoE Login</label>
+                    <div class="form-floating mb-3 d-flex">
+                        <select class="form-control" id="serviceippool" name="serviceippool" required>
+                            <option value="">Select IP Pool</option>
+                            @foreach ($ippools as $ippool)
+                                <option value="{{ $ippool->network }}">
+                                    {{ $ippool->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <label for="serviceippool">Select IP Pool</label>
+                    </div>
+
+                    <div class="form-floating mb-3 d-flex">
+                        <input type="number" id="service_price" name="service_price" class="form-control"
+                            placeholder="">
+                        <label for="service_price">Service Price</label>
+                    </div>
+
+                    <div class="form-floating mb-3 d-flex">
                         <input type="text" id="pppoe_login" name="pppoe_login" class="form-control"
-                            value={{ $customer->id }}>
+                            value={{ $customer->id }} placeholder="">
+                        <label for="pppoe_login">PPPoE Login</label>
                     </div>
 
                     <div class="form-floating mb-3 d-flex">
@@ -201,6 +270,7 @@
                                 onclick="generatePassword()">Generate</button>
                         </div>
                     </div>
+
                 </div>
                 <div class="modal-footer d-flex justify-content-between">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -223,27 +293,33 @@
             <div class="modal-body">
                 <form method="POST" action="{{ route('service.store', ['customer' => $customer->id]) }}">
                     @csrf
-                    <div class="form-group">
-                        <label for="service">Select Plan</label>
-                        <select class="form-control" id="service" name="service" required>
-                            <option value="">Select Service</option>
-                            @foreach ($pppoeprofiles as $pppoeprofile)
-                                <option value="{{ $pppoeprofile->profile_name }}">
-                                    {{ $pppoeprofile->profile_name }}
+                    <div class="form-floating mb-3 d-flex">
+                        <select class="form-control" id="serviceippool" name="serviceippool" required>
+                            <option value="">Select IP Pool</option>
+                            @foreach ($ippools as $ippool)
+                                <option value="{{ $ippool->network }}">
+                                    {{ $ippool->name }}
                                 </option>
                             @endforeach
                         </select>
+                        <label for="serviceippool">Select IP Pool</label>
                     </div>
 
-                    <div class="form-group">
-                        <label for="pppoe_login">PPPoE Login</label>
+                    <div class="form-floating mb-3 d-flex">
+                        <input type="number" id="service_price" name="service_price" class="form-control"
+                            placeholder="" value="{{ $services }}">
+                        <label for="service_price">Service Price</label>
+                    </div>
+
+                    <div class="form-floating mb-3 d-flex">
                         <input type="text" id="pppoe_login" name="pppoe_login" class="form-control"
-                            value={{ $customer->id }}>
+                            value={{ $customer->id }} placeholder="">
+                        <label for="pppoe_login">PPPoE Login</label>
                     </div>
 
                     <div class="form-floating mb-3 d-flex">
                         <input type="text" id="pppoe_password" name="pppoe_password" class="form-control"
-                            placeholder="" required>
+                            placeholder="" required autocomplete="off">
                         <label for="pppoe_password" class="m2-2">PPPoE Password</label>
                         <div class="input-group-append ms-2 form-floating">
                             <button type="button" class="form-control btn btn-outline-primary"
@@ -326,4 +402,102 @@
             }
         }
     });
+
+    // Fetch the selected pppoe data when it is selected
+    function logSelectedOption(selectElement) {
+        var serviceId = selectElement.value;
+        if (serviceId) {
+            fetch('{{ route('pppoe.show') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        serviceId: serviceId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('service_price').value = data.service.service_price;
+                    } else {
+                        alert('Failed to fetch service data');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching  service data:', error);
+                    alert('Failed to fetch  service data');
+                });
+        } else {
+            $('#service-details').html('');
+        }
+    }
+
+    // fetch the subscription data
+    function fetchSubscription(subscriptionid) {
+        fetch('{{ route('service.show') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    subscriptionid: subscriptionid
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log(data.subscription.pppoe_password);
+                    document.getElementById('pppoe_password').value = data.subscription.pppoe_password;
+                    document.getElementById('service_price').value = data.subscription.service_price;
+                    // document.getElementById('serviceippool').value = data.network;
+                } else {
+                    alert('Failed to fetch service data');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching  service data:', error);
+                alert('Failed to fetch  service data');
+            });
+    }
+
+    function confirmDelete(event, route) {
+        event.preventDefault();
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'You will not be able to recover this service!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Create a form to submit the DELETE request
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = route;
+
+                // Add CSRF token input
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                csrfInput.value = csrfToken;
+                form.appendChild(csrfInput);
+
+                // Add DELETE method input
+                const methodInput = document.createElement('input');
+                methodInput.type = 'hidden';
+                methodInput.name = '_method';
+                methodInput.value = 'DELETE';
+                form.appendChild(methodInput);
+
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    }
 </script>

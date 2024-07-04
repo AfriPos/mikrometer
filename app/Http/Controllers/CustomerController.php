@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CustomerModel;
 use App\Models\CustomerSubscriptionModel;
 use App\Models\IPAddressesModel;
+use App\Models\PoolModel;
 use App\Models\PPPoEProfile;
 use Illuminate\Http\Request;
 
@@ -67,7 +68,8 @@ class CustomerController extends Controller
         $pppoeprofiles = PPPoEProfile::all();
         $services = CustomerSubscriptionModel::where('customer_id', $customer->id)->get();
         $ipaddress = IPAddressesModel::where('customer_id', $customer->id)->first();
-        return view('customer.edit', compact('customer', 'pppoeprofiles', 'services', 'ipaddress'));
+        $ippools = PoolModel::all();
+        return view('customer.edit', compact('customer', 'pppoeprofiles', 'services', 'ipaddress', 'ippools'));
     }
 
     /**

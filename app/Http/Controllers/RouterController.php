@@ -51,8 +51,12 @@ class RouterController extends Controller
                     'interfaces' => $interfaces,
                 ]);
             }
-            //  else {
-            // }
+             else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to connect to the router.',
+                ]);
+            }
         } catch (\Throwable $th) {
             return response()->json([
                 'success' => false,
