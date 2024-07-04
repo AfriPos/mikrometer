@@ -3,29 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Models\IPAddressesModel;
+use App\Jobs\ProcessIPAddresses;
 use App\Models\PoolModel;
 use App\Models\RouterCredential;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\api\RouterosController;
-use Illuminate\Http\Request;
 use App\MyHelper\RouterosAPI;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class PoolController extends Controller
 {
-
-
     public $API = [], $routeros_data = [], $connection;
-
     private $routerosController;
 
     public function __construct()
     {
         $this->routerosController = new RouterosController();
-        $this->API = new RouterosAPI(); // This line should be $this->API = new RouterosAPI();
+        $this->API = new RouterosAPI();
     }
-
 
     /**
      * Display a listing of the resource.
@@ -46,22 +44,20 @@ class PoolController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     */public function store(Request $request)
-{
-    try {
-        // Validate the request
-        $validator = Validator::make($request->all(), [
-            'name' => 'required',
-            'network' => 'required',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        DB::beginTransaction();
-
+     */
+    public function store(Request $request)
+    {
         try {
+            // Validate the request
+            $validator = Validator::make($request->all(), [
+                'name' => 'required',
+                'network' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return redirect()->back()->withErrors($validator)->withInput();
+            }
+
             // Generate a unique 9-digit pool ID
             $poolId = mt_rand(100000000, 999999999);
 
@@ -71,52 +67,14 @@ class PoolController extends Controller
             $ippool->network = $request->network;
             $ippool->save();
 
-            $ipGenerator = $this->listIpsInRange($request->network);
-
-            $batchSize = 50;
-            $ipBatch = [];
-            $currentTime = now();
-            foreach ($ipGenerator as $ip) {
-                $ipBatch[] = [
-                    'ip_address' => $ip,
-                    'pool_id' => $poolId,
-                ];
-
-                if (count($ipBatch) >= $batchSize) {
-                    IPAddressesModel::insert($ipBatch);
-                    $ipBatch = [];
-                }
-            }
-
-            // Insert any remaining IP addresses
-            if (!empty($ipBatch)) {
-                IPAddressesModel::insert($ipBatch);
-            }
-
-            DB::commit();
+            // Dispatch job to process IP addresses in the background
+            ProcessIPAddresses::dispatch($request->network, $poolId);
 
             return redirect()->back()->with('success', "Successfully added IP pool: {$request->name}");
         } catch (\Throwable $e) {
-            DB::rollBack();
             return redirect()->back()->with('error', 'Error creating IP pool: ' . $e->getMessage());
         }
-    } catch (\Throwable $e) {
-        return redirect()->back()->with('error', 'System Error: ' . $e->getMessage());
     }
-}
-
-public function listIpsInRange($ipRange)
-{
-    list($baseIp, $cidr) = explode('/', $ipRange);
-    $ip = ip2long($baseIp);
-    $numHosts = (1 << (32 - $cidr)) - 2; // Subtract 2 for network and broadcast addresses
-
-    for ($i = 1; $i <= $numHosts; $i++) {
-        yield long2ip($ip + $i);
-    }
-}
-
-
 
     /**
      * Display the specified resource.
