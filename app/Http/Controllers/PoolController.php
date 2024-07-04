@@ -3,30 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Models\IPAddressesModel;
+use App\Jobs\ProcessIPAddresses;
 use App\Models\PoolModel;
 use App\Models\RouterCredential;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\api\RouterosController;
-use App\Jobs\InsertIPPoolJob;
-use Illuminate\Http\Request;
 use App\MyHelper\RouterosAPI;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class PoolController extends Controller
 {
-
-
     public $API = [], $routeros_data = [], $connection;
-
     private $routerosController;
 
     public function __construct()
     {
         $this->routerosController = new RouterosController();
-        $this->API = new RouterosAPI(); // This line should be $this->API = new RouterosAPI();
+        $this->API = new RouterosAPI();
     }
-
 
     /**
      * Display a listing of the resource.
@@ -47,7 +44,8 @@ class PoolController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     */ public function store(Request $request)
+     */
+    public function store(Request $request)
     {
         try {
             // Validate the request
@@ -60,11 +58,8 @@ class PoolController extends Controller
                 return redirect()->back()->withErrors($validator)->withInput();
             }
 
-            DB::beginTransaction();
-
-            try {
-                // Generate a unique 9-digit pool ID
-                $poolId = mt_rand(100000000, 999999999);
+            // Generate a unique 9-digit pool ID
+            $poolId = mt_rand(100000000, 999999999);
 
                 $ippool = new PoolModel();
                 $ippool->id = $poolId; // Use the random 9-digit number for pool ID
@@ -72,62 +67,12 @@ class PoolController extends Controller
                 $ippool->network = $request->network;
                 $ippool->save();
 
-                // Limit the number of IP addresses to be added
-                $limit = 65791; // Maximum number of IPs to add
-                $ipGenerator = $this->listIpsInRangeLimited($request->network, $limit);
+            // Dispatch job to process IP addresses in the background
+            ProcessIPAddresses::dispatch($request->network, $poolId);
 
-                $batchSize = 50;
-                $ipBatch = [];
-                $currentTime = now();
-                foreach ($ipGenerator as $ip) {
-                    $ipBatch[] = [
-                        'ip_address' => $ip,
-                        'pool_id' => $poolId,
-                        'created_at' => $currentTime,
-                        'updated_at' => $currentTime,
-                    ];
-
-                    if (count($ipBatch) >= $batchSize) {
-                        IPAddressesModel::insert($ipBatch);
-                        $ipBatch = [];
-                    }
-                }
-
-                // Insert any remaining IP addresses
-                if (!empty($ipBatch)) {
-                    IPAddressesModel::insert($ipBatch);
-                }
-
-                DB::commit();
-
-                return redirect()->back()->with('success', "Successfully added IP pool: {$request->name}");
-            } catch (\Throwable $e) {
-                DB::rollBack();
-                return redirect()->back()->with('error', 'Error creating IP pool: ' . $e->getMessage());
-            }
+            return redirect()->back()->with('success', "Successfully added IP pool: {$request->name}");
         } catch (\Throwable $e) {
-            return redirect()->back()->with('error', 'System Error: ' . $e->getMessage());
-        }
-    }
-
-    public function listIpsInRangeLimited($ipRange, $limit)
-    {
-        list($baseIp, $cidr) = explode('/', $ipRange);
-        $ip = ip2long($baseIp);
-        $numHosts = (1 << (32 - $cidr)) - 2; // Subtract 2 for network and broadcast addresses
-
-        // Ensure we do not exceed the specified limit
-        $numHosts = min($numHosts, $limit);
-
-        $count = 0;
-        for ($i = 1; $i <= $numHosts; $i++) {
-            yield long2ip($ip + $i);
-            $count++;
-
-            // Check if we have reached the limit
-            if ($count >= $limit) {
-                break;
-            }
+            return redirect()->back()->with('error', 'Error creating IP pool: ' . $e->getMessage());
         }
     }
 
