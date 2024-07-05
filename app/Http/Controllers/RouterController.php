@@ -50,8 +50,7 @@ class RouterController extends Controller
                     'success' => true,
                     'interfaces' => $interfaces,
                 ]);
-            }
-             else {
+            } else {
                 return response()->json([
                     'success' => false,
                     'message' => 'Failed to connect to the router.',
@@ -94,56 +93,62 @@ class RouterController extends Controller
             DB::beginTransaction();
 
             $validator = Validator::make($request->all(), [
-                'ip_address' => 'required',
-                'login' => 'required',
-                'password' => 'required'
+                'nasname' => 'required',
+                'shortname' => 'required',
+                'secret' => 'required'
             ]);
             if ($validator->fails())
                 return response()->json($validator->errors(), 404);
             $req_data = [
-                'ip_address' => $request->ip_address,
-                'login' => $request->login,
-                'password' => $request->password,
+                'nasname' => $request->nasname,
+                'shortname' => $request->shortname,
+                'secret' => $request->secret,
             ];
 
-            $routeros_db = RouterCredential::where('ip_address', $req_data['ip_address'])->get();
+            $routerCredential = RouterCredential::create($req_data);
 
-            if (count($routeros_db) > 0) {
-                if (!$this->routerosController->check_routeros_connection($request->all())) {
-                    DB::rollBack();
-                    return redirect()->back()->with('error', 'RouterOS connection failed! check the administrator credentials!');
-                }
-            } else {
+            DB::commit();
+            return redirect()->back()->with('success', 'Router has been successfully added!');
 
-                $API = new RouterosAPI;
-                $connection = $API->connect($request['ip_address'], $request['login'], $request['password']);
-                if (!$connection) {
-                    DB::rollBack();
-                    return redirect()->back()->with('error', 'Error connecting to the router!');
-                }
-                // var_dump($API->comm('/system/identity/print'));
-                $store_routeros_data = [
-                    'identity' => $API->comm('/system/identity/print')[0]['name'],
-                    'ip_address' => $request['ip_address'],
-                    'login' => $request['login'],
-                    'password' => $request['password'],
-                    'connect' => $connection
 
-                ];
-                $store_routeros = new RouterCredential;
-                $store_routeros->identity = $store_routeros_data['identity'];
-                $store_routeros->ip_address = $store_routeros_data['ip_address'];
-                $store_routeros->login = $store_routeros_data['login'];
-                $store_routeros->password = $store_routeros_data['password'];
-                $store_routeros->connect = $store_routeros_data['connect'];
-                $store_routeros->save();
+            //     $routeros_db = RouterCredential::where('ip_address', $req_data['ip_address'])->get();
 
-                DB::commit();
-                return redirect()->back()->with('success', 'Router has been successfully added!');
-            }
+            //     if (count($routeros_db) > 0) {
+            //         if (!$this->routerosController->check_routeros_connection($request->all())) {
+            //             DB::rollBack();
+            //             return redirect()->back()->with('error', 'RouterOS connection failed! check the administrator credentials!');
+            //         }
+            //     } else {
+
+            //         $API = new RouterosAPI;
+            //         $connection = $API->connect($request['ip_address'], $request['login'], $request['password']);
+            //         if (!$connection) {
+            //             DB::rollBack();
+            //             return redirect()->back()->with('error', 'Error connecting to the router!');
+            //         }
+            //         // var_dump($API->comm('/system/identity/print'));
+            //         $store_routeros_data = [
+            //             'identity' => $API->comm('/system/identity/print')[0]['name'],
+            //             'ip_address' => $request['ip_address'],
+            //             'login' => $request['login'],
+            //             'password' => $request['password'],
+            //             'connect' => $connection
+
+            //         ];
+            //         $store_routeros = new RouterCredential;
+            //         $store_routeros->identity = $store_routeros_data['identity'];
+            //         $store_routeros->ip_address = $store_routeros_data['ip_address'];
+            //         $store_routeros->login = $store_routeros_data['login'];
+            //         $store_routeros->password = $store_routeros_data['password'];
+            //         $store_routeros->connect = $store_routeros_data['connect'];
+            //         $store_routeros->save();
+
+            //         DB::commit();
+            //         return redirect()->back()->with('success', 'Router has been successfully added!');
+            //     }
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('success', 'Error fetching router data!');
+            return redirect()->back()->with('error', 'Something went wrong!');
         }
     }
 

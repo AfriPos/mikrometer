@@ -5,17 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class RouterCredential extends Model
+class radgroupcheck extends Model
 {
     use HasFactory;
+
+    protected $table = 'radgroupcheck'; 
     public $timestamps = false;
-    protected $table = 'nas';
-    
+
     protected $fillable = [
-        'nasname',
-        'shortname',
-        'type',
-        'secret',
-        'description'
+        'groupname',
+        'attribute',
+        'op',
+        'value',
     ];
 }

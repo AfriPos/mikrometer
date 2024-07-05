@@ -52,19 +52,24 @@
 
                             @csrf
                             <div class="form-floating mb-3">
-                                <input type="text" class="form-control" id="ip_address" name="ip_address"
+                                <input type="text" class="form-control" id="nasname" name="nasname"
                                     placeholder="" required>
-                                <label for="ip_address">Ip Address</label>
+                                <label for="nasname">NAS Address</label>
                             </div>
                             <div class="form-floating mb-3">
-                                <input type="text" class="form-control" id="login" name="login" placeholder=""
+                                <input type="text" class="form-control" id="shortname" name="shortname" placeholder=""
                                     required>
-                                <label for="login">Login</label>
+                                <label for="shortname">Title</label>
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <input type="password" class="form-control" id="secret" name="secret"
+                                    placeholder="" required>
+                                <label for="secret">Radius Secret</label>
                             </div>
                             <div class="form-floating mb-3">
-                                <input type="password" class="form-control" id="password" name="password"
-                                    placeholder="" required>
-                                <label for="password">Password</label>
+                                <textarea class="form-control" id="description" name="description" placeholder="" rows="3"></textarea>
+                                <label for="description">Description</label>
                             </div>
 
                             <div class="d-grid gap-2 col-6 mx-auto">
