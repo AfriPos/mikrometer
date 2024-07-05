@@ -338,17 +338,6 @@
 </div>
 
 <script>
-    function generatePassword() {
-        var length = 8;
-        var charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        var password = "";
-        for (var i = 0, n = charset.length; i < length; ++i) {
-            password += charset.charAt(Math.floor(Math.random() * n));
-        }
-        document.getElementById("pppoe_password").value = password;
-    }
-
-
     function changeActive(element, tabId) {
         // Remove active class from all nav links
         var navLinks = document.getElementsByClassName("nav-link");

@@ -43,11 +43,13 @@ class CustomerController extends Controller
             ]);
 
             // Create a new customer record
-            CustomerModel::create($validatedData);
 
-            // Redirect back to the form with a success message
-            return redirect()->back()->with('success', 'Customer added successfully!');
-        } catch (\Throwable $th) {
+            $customer = CustomerModel::create($validatedData);
+
+
+
+            // Redirect to the edit route of the customer using the recently added id
+            return redirect()->route('customers.edit', $customer->id)->with('success', 'Customer added successfully!');        } catch (\Throwable $th) {
             return redirect()->back()->withErrors(['error' => 'An error occurred: ' . $th->getMessage()]);
         }
     }

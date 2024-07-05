@@ -8,10 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 class RouterCredential extends Model
 {
     use HasFactory;
-    protected $table = 'routers';
+    protected $table = 'nas';
     protected $fillable = [
-        'ip_address',
-        'username',
+        'nasname',
+        'shortname',
         'password',
     ];
 }

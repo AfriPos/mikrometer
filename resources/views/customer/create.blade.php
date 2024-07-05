@@ -8,7 +8,7 @@
                     </div>
                     <div class="card-body p-3">
                         <div class="card-body">
-                            
+
                             @if (session('success'))
                                 <div class="alert alert-success" role="alert">
                                     {{ session('success') }}
@@ -27,6 +27,52 @@
 
                             <form method="POST" action="{{ route('customer.store') }}">
                                 @csrf
+                                {{-- <div class="row">
+                                    <div class="col-12 col-md-6 mb-3">
+                                        <div class="p-3 rounded-2 border">
+                                            <h5>Main information</h5>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6 mb-3">
+                                        <div class="p-3 rounded-2 border">
+                                            <h5>Comments</h5>
+                                        </div>
+                                    </div>
+                                </div> --}}
+
+                                <div class="form-floating mb-3">
+                                    <input type="text" id="plogin" name="plogin" class="form-control"
+                                        value="{{ old('name') }}" placeholder="" required>
+                                    <label for="plogin">Portal login</label>
+                                </div>
+
+                                <div class="form-floating mb-3 d-flex">
+                                    <input type="text" id="ppassword" name="ppassword" class="form-control"
+                                        value="{{ old('name') }}" placeholder="" required>
+                                    <label for="ppassword">Portal password</label>
+                                    <div class="input-group-append ms-2 form-floating">
+                                        <button type="button" class="form-control btn btn-outline-primary"
+                                            onclick="generatePassword()">Generate</button>
+                                    </div>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <select id="service_type" name="service_type" class="form-control" required>
+                                        <option value="">Select Service Type</option>
+                                        <option value="recurring">Recurring</option>
+                                        <option value="prepaid">Prepaid</option>
+                                    </select>
+                                    <label for="service_type">Service Type</label>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <select id="category" name="category" class="form-control" required>
+                                        <option value="">Select Category</option>
+                                        <option value="individual">Individual</option>
+                                        <option value="business">Business</option>
+                                    </select>
+                                    <label for="category">Category</label>
+                                </div>
 
                                 <div class="form-floating mb-3">
                                     <input type="text" id="name" name="name" class="form-control"
@@ -41,9 +87,58 @@
                                 </div>
 
                                 <div class="form-floating mb-3">
+                                    <input type="email" id="billing_email" name="billing_email" class="form-control"
+                                        value="{{ old('billing_email') }}" placeholder="" required>
+                                    <label for="billing_email">Billing Email</label>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <input type="text" id="mpesa_phone" name="mpesa_phone" class="form-control"
+                                        value="{{ old('mpesa_phone') }}" placeholder="" required>
+                                    <label for="mpesa_phone">M-Pesa Phone Number</label>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <input type="date" id="dob" name="dob" class="form-control"
+                                        value="{{ old('dob') }}" placeholder="" required>
+                                    <label for="dob">Date of Birth</label>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <input type="text" id="id_number" name="id_number" class="form-control"
+                                        value="{{ old('id_number') }}" placeholder="" required>
+                                    <label for="id_number">Identification Number</label>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <input type="text" id="street" name="street" class="form-control"
+                                        value="{{ old('street') }}" placeholder="" required>
+                                    <label for="street">Street</label>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <input type="text" id="zip_code" name="zip_code" class="form-control"
+                                        value="{{ old('zip_code') }}" placeholder="" required>
+                                    <label for="zip_code">Zip Code</label>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <input type="text" id="city" name="city" class="form-control"
+                                        value="{{ old('city') }}" placeholder="" required>
+                                    <label for="city">City</label>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <input type="text" id="geo_data" name="geo_data" class="form-control"
+                                        value="{{ old('geo_data') }}" placeholder="" required>
+                                    <label for="geo_data">Geo Data</label>
+                                </div>
+
+
+                                <div class="form-floating mb-3">
                                     <input type="text" id="phone" name="phone" class="form-control"
                                         value="{{ old('phone') }}" placeholder="" required>
-                                    <label for="phone">Phone</label>
+                                    <label for="phone">Phone number</label>
                                 </div>
 
                                 <div class="d-grid gap-2 col-6 mx-auto">
