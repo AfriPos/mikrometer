@@ -7,6 +7,7 @@ use App\Models\CustomerSubscriptionModel;
 use App\Models\IPAddressesModel;
 use App\Models\PoolModel;
 use App\Models\PPPoEProfile;
+use App\Models\radusergroup;
 use Illuminate\Http\Request;
 
 class CustomerController extends Controller
@@ -34,7 +35,6 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         try {
-
             // Validate the incoming request data
             $validatedData = $request->validate([
                 'name' => 'required|string|max:255',
@@ -43,13 +43,11 @@ class CustomerController extends Controller
             ]);
 
             // Create a new customer record
-
             $customer = CustomerModel::create($validatedData);
 
-
-
             // Redirect to the edit route of the customer using the recently added id
-            return redirect()->route('customers.edit', $customer->id)->with('success', 'Customer added successfully!');        } catch (\Throwable $th) {
+            return redirect()->route('customer.edit', $customer->id)->with('success', 'Customer added successfully!');
+        } catch (\Throwable $th) {
             return redirect()->back()->withErrors(['error' => 'An error occurred: ' . $th->getMessage()]);
         }
     }
@@ -67,7 +65,7 @@ class CustomerController extends Controller
      */
     public function edit(CustomerModel $customer)
     {
-        $pppoeprofiles = PPPoEProfile::all();
+        $pppoeprofiles = radusergroup::all();
         $services = CustomerSubscriptionModel::where('customer_id', $customer->id)->get();
         $ipaddress = IPAddressesModel::where('customer_id', $customer->id)->first();
         $ippools = PoolModel::all();

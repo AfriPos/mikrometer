@@ -161,7 +161,7 @@ class PPPoeServiceController extends Controller
      */
     public function show(Request $request)
     {
-        $service = PPPoEService::where('id', $request->serviceId)->first();
+        $service = radusergroup::where('username', $request->serviceId)->first();
 
         if ($service) {
             // Return the JSON response

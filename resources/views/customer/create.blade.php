@@ -42,13 +42,13 @@
 
                                 <div class="form-floating mb-3">
                                     <input type="text" id="plogin" name="plogin" class="form-control"
-                                        value="{{ old('name') }}" placeholder="" required>
+                                        value="{{ old('name') }}" placeholder="">
                                     <label for="plogin">Portal login</label>
                                 </div>
 
                                 <div class="form-floating mb-3 d-flex">
                                     <input type="text" id="ppassword" name="ppassword" class="form-control"
-                                        value="{{ old('name') }}" placeholder="" required>
+                                        value="{{ old('name') }}" placeholder="">
                                     <label for="ppassword">Portal password</label>
                                     <div class="input-group-append ms-2 form-floating">
                                         <button type="button" class="form-control btn btn-outline-primary"
@@ -57,7 +57,7 @@
                                 </div>
 
                                 <div class="form-floating mb-3">
-                                    <select id="service_type" name="service_type" class="form-control" required>
+                                    <select id="service_type" name="service_type" class="form-control">
                                         <option value="">Select Service Type</option>
                                         <option value="recurring">Recurring</option>
                                         <option value="prepaid">Prepaid</option>
@@ -66,7 +66,7 @@
                                 </div>
 
                                 <div class="form-floating mb-3">
-                                    <select id="category" name="category" class="form-control" required>
+                                    <select id="category" name="category" class="form-control">
                                         <option value="">Select Category</option>
                                         <option value="individual">Individual</option>
                                         <option value="business">Business</option>
@@ -76,68 +76,68 @@
 
                                 <div class="form-floating mb-3">
                                     <input type="text" id="name" name="name" class="form-control"
-                                        value="{{ old('name') }}" placeholder="" required>
+                                        value="{{ old('name') }}" placeholder="">
                                     <label for="name">Name</label>
                                 </div>
 
                                 <div class="form-floating mb-3">
                                     <input type="email" id="email" name="email" class="form-control"
-                                        value="{{ old('email') }}" placeholder="" required>
+                                        value="{{ old('email') }}" placeholder="">
                                     <label for="email">Email</label>
                                 </div>
 
                                 <div class="form-floating mb-3">
                                     <input type="email" id="billing_email" name="billing_email" class="form-control"
-                                        value="{{ old('billing_email') }}" placeholder="" required>
+                                        value="{{ old('billing_email') }}" placeholder="">
                                     <label for="billing_email">Billing Email</label>
                                 </div>
 
                                 <div class="form-floating mb-3">
                                     <input type="text" id="mpesa_phone" name="mpesa_phone" class="form-control"
-                                        value="{{ old('mpesa_phone') }}" placeholder="" required>
+                                        value="{{ old('mpesa_phone') }}" placeholder="">
                                     <label for="mpesa_phone">M-Pesa Phone Number</label>
                                 </div>
 
                                 <div class="form-floating mb-3">
                                     <input type="date" id="dob" name="dob" class="form-control"
-                                        value="{{ old('dob') }}" placeholder="" required>
+                                        value="{{ old('dob') }}" placeholder="">
                                     <label for="dob">Date of Birth</label>
                                 </div>
 
                                 <div class="form-floating mb-3">
                                     <input type="text" id="id_number" name="id_number" class="form-control"
-                                        value="{{ old('id_number') }}" placeholder="" required>
+                                        value="{{ old('id_number') }}" placeholder="">
                                     <label for="id_number">Identification Number</label>
                                 </div>
 
                                 <div class="form-floating mb-3">
                                     <input type="text" id="street" name="street" class="form-control"
-                                        value="{{ old('street') }}" placeholder="" required>
+                                        value="{{ old('street') }}" placeholder="">
                                     <label for="street">Street</label>
                                 </div>
 
                                 <div class="form-floating mb-3">
                                     <input type="text" id="zip_code" name="zip_code" class="form-control"
-                                        value="{{ old('zip_code') }}" placeholder="" required>
+                                        value="{{ old('zip_code') }}" placeholder="">
                                     <label for="zip_code">Zip Code</label>
                                 </div>
 
                                 <div class="form-floating mb-3">
                                     <input type="text" id="city" name="city" class="form-control"
-                                        value="{{ old('city') }}" placeholder="" required>
+                                        value="{{ old('city') }}" placeholder="">
                                     <label for="city">City</label>
                                 </div>
 
                                 <div class="form-floating mb-3">
                                     <input type="text" id="geo_data" name="geo_data" class="form-control"
-                                        value="{{ old('geo_data') }}" placeholder="" required>
+                                        value="{{ old('geo_data') }}" placeholder="">
                                     <label for="geo_data">Geo Data</label>
                                 </div>
 
 
                                 <div class="form-floating mb-3">
                                     <input type="text" id="phone" name="phone" class="form-control"
-                                        value="{{ old('phone') }}" placeholder="" required>
+                                        value="{{ old('phone') }}" placeholder="">
                                     <label for="phone">Phone number</label>
                                 </div>
 

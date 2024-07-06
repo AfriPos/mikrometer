@@ -73,7 +73,7 @@
                         <div id="info" class="tab-content active">
                             <div
                                 class="rounded-2 mt-2 ps-3 pe-3 pt-3 d-flex justify-content-between bg-secondary-subtle text-secondary-emphasis">
-                                <div >Account balance</div>
+                                <div>Account balance</div>
                                 <div>
                                     <div class="btn-group">
                                         <button class="btn btn-sm btn-secondary dropdown-toggle" type="button"
@@ -228,9 +228,8 @@
                             onchange="logSelectedOption(this)">
                             <option value="">Select Service</option>
                             @foreach ($pppoeprofiles as $pppoeprofile)
-                                <option value="{{ $pppoeprofile->id }}"
-                                    @if ($customer->pppoeprofile_id == $pppoeprofile->id) selected @endif>
-                                    {{ $pppoeprofile->profile_name }}
+                                <option value="{{ $pppoeprofile->username }}" {{-- @if ($customer->pppoeprofile_id == $pppoeprofile->id) selected @endif --}}>
+                                    {{ $pppoeprofile->username }}
                                 </option>
                             @endforeach
                         </select>

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\CustomerModel;
 use App\Models\CustomerSubscriptionModel;
 use App\Models\PPPoEService;
+use App\Models\radcheck;
+use App\Models\radreply;
 use App\Models\RouterCredential;
 use App\MyHelper\RouterosAPI;
 use Illuminate\Http\Request;
@@ -50,21 +52,42 @@ class CustomerSubscriptionController extends Controller
             $network = $request->input('serviceippool');
             $networkip = $this->getNetworkIp($network);
 
-            // Create subscription
-            $subscription = new CustomerSubscriptionModel();
-            $subscription->pppoe_id = $request->input('service');
-            $subscription->pppoe_login = $request->input('pppoe_login');
-            $subscription->pppoe_password = $request->input('pppoe_password');
-            $subscription->service_price = $request->input('service_price');
-            $subscription->local_address = $networkip;
-            $subscription->remote_address = $allocatedIp;
-            $subscription->customer_id = $customerId;
-            $subscription->start_date = now();
-            $subscription->end_date = now()->addMonth(); // Example for a 1-month duration
-            $subscription->invoiced_till = now(); // Set this based on your logic
-            $subscription->status = 'active';
-            $subscription->save();
+            // // Create subscription
+            // $subscription = new CustomerSubscriptionModel();
+            // $subscription->pppoe_id = $request->input('service');
+            // $subscription->pppoe_login = $request->input('pppoe_login');
+            // $subscription->pppoe_password = $request->input('pppoe_password');
+            // $subscription->service_price = $request->input('service_price');
+            // $subscription->local_address = $networkip;
+            // $subscription->remote_address = $allocatedIp;
+            // $subscription->customer_id = $customerId;
+            // $subscription->start_date = now();
+            // $subscription->end_date = now()->addMonth(); // Example for a 1-month duration
+            // $subscription->invoiced_till = now(); // Set this based on your logic
+            // $subscription->status = 'active';
+            // $subscription->save();
 
+            $radreply = new radreply();
+            $radreply->username = $request->pppoe_login;
+            $radreply->attribute = 'Framed-IP-Address';
+            $radreply->op = ':=';
+            $radreply->value = $allocatedIp;
+            $radreply->save();
+
+
+            $radcheck = new radcheck();
+            $radcheck->username = $request->pppoe_login;
+            $radcheck->attribute = 'Cleartext-Password';
+            $radcheck->op = ':=';
+            $radcheck->value = $request->pppoe_password;
+            $radcheck->save();
+
+            $radcheck2 = new radcheck();
+            $radcheck2->username = $request->pppoe_login;
+            $radcheck2->attribute = 'User-Profile';
+            $radcheck2->op = ':=';
+            $radcheck2->value = $request->service;
+            $radcheck2->save();
             DB::commit();
 
             // return response()->json(['success' => 'Service created and activated successfully.']);
