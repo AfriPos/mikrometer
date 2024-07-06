@@ -5,17 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class RouterCredential extends Model
+class radgroupreply extends Model
 {
     use HasFactory;
+
+    protected $table = 'radgroupreply';
     public $timestamps = false;
-    protected $table = 'nas';
-    
     protected $fillable = [
-        'nasname',
-        'shortname',
-        'type',
-        'secret',
-        'description'
+        'groupname',
+        'attribute',
+        'op',
+        'value',
     ];
 }
