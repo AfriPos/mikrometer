@@ -120,6 +120,9 @@ class PPPoeServiceController extends Controller
             $radusergroup->username = $request->service_name;
             $radusergroup->groupname = $request->service_name;
             $radusergroup->priority = $request->priority;
+            $radusergroup->service_price = $request->service_price;
+            $radusergroup->service_duration = $request->servie_duration;
+            $radusergroup->duration_unit = $request->servie_duration_unit;
             $radusergroup->save();
 
             // $pppoe = new PPPoeService();

@@ -16,5 +16,8 @@ class radusergroup extends Model
         'username',
         'groupname',
         'priority',
+        'service_price',
+        'service_duration',
+        'duration_unit',
     ];
 }
