@@ -1,3 +1,7 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming"></script>
 <x-app-layout>
     <div class="container-fluid p-4">
         <div class="row">
@@ -360,68 +364,7 @@
                             <div class="card">
                                 <div class="card-header">Bandwidth Usage</div>
                                 <div class="card-body">
-                                    <div class="mb-3">
-                                        <table class="table align-items-center mb-0">
-                                            <thead>
-                                                <th>Login</th>
-                                                <th>In</th>
-                                                <th>Out</th>
-                                                <th>Started at</th>
-                                                <th>Time</th>
-                                                <th>IP</th>
-                                                <th>NAS</th>
-                                            </thead>
-                                            <tbody id="activeSessionData">
-
-                                            </tbody>
-
-                                        </table>
-
-                                        <script>
-                                            function fetchActiveSession() {
-                                                fetch(`/bandwidth/active-session/{{ $customer->username }}`)
-                                                    .then(response => response.json())
-                                                    .then(data => {
-                                                        if (data.success) {
-                                                            const sessionData = data.data;
-                                                            const tbody = document.getElementById('activeSessionData');
-                                                            tbody.innerHTML = `
-                    <tr>
-                        <td>${sessionData.username}</td>
-                        <td>${formatBytes(sessionData.acctinputoctets)}</td>
-                        <td>${formatBytes(sessionData.acctoutputoctets)}</td>
-                        <td>${new Date(sessionData.acctstarttime).toLocaleString()}</td>
-                        <td>${formatDuration(sessionData.acctsessiontime)}</td>
-                        <td>${sessionData.framedipaddress}</td>
-                        <td>${sessionData.nasipaddress}</td>
-                    </tr>
-                `;
-                                                        } else {
-                                                            console.error('Failed to fetch active session data:', data.message);
-                                                        }
-                                                    })
-                                                    .catch(error => console.error('Error:', error));
-                                            }
-
-                                            function formatBytes(bytes) {
-                                                if (bytes === 0) return '0 Bytes';
-                                                const k = 1024;
-                                                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-                                                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                                                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-                                            }
-
-                                            function formatDuration(seconds) {
-                                                const hours = Math.floor(seconds / 3600);
-                                                const minutes = Math.floor((seconds % 3600) / 60);
-                                                const remainingSeconds = seconds % 60;
-                                                return `${hours}h ${minutes}m ${remainingSeconds}s`;
-                                            }
-
-                                            // Call the function when the page loads
-                                            document.addEventListener('DOMContentLoaded', fetchActiveSession);
-                                        </script>
-                                    </div>
+                              
                                 </div>
                                 <div class="card-body">
                                     <div class="mb-3" style="width: 100%; height: 25vh;">
@@ -591,4 +534,65 @@
         }
     }
 </script>
-@vite('resources/js/bandwidth-ajax.js')
+
+<script>
+    const customerId = {{ $customer->id }}; 
+const ctx = document.getElementById('bandwidthChart').getContext('2d');
+const bandwidthChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        datasets: [{
+            label: 'Upload',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            fill: true,
+            data: []
+        }, {
+            label: 'Download',
+            borderColor: 'rgba(153, 102, 255, 1)',
+            backgroundColor: 'rgba(153, 102, 255, 0.2)',
+            fill: true,
+            data: []
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            x: {
+                type: 'realtime',
+                realtime: {
+                    delay: 2000,
+                    refresh: 1000,
+                    onRefresh: function(chart) {
+                        fetch(`/admin/customer/${customerId}/bandwidth`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    const timestamp = Math.floor(Date.now() / 1000) * 1000;
+                                    chart.data.datasets[0].data.push({
+                                        x: timestamp,
+                                        y: parseFloat(data.tx_bits_per_second)
+                                    });
+                                    chart.data.datasets[1].data.push({
+                                        x: timestamp,
+                                        y: parseFloat(data.rx_bits_per_second)
+                                    });
+                                    chart.update();
+                                }
+                            });
+                    }
+                },
+                time: {
+                    displayFormats: {
+                        hour: 'HH:mm'
+                    }
+                }
+            },
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>

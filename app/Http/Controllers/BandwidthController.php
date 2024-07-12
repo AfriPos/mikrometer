@@ -9,7 +9,7 @@ class BandwidthController extends Controller
 {
     public function fetchBandwidth(Request $request, $customerId)
     {
-        $routerIp = '192.168.100.218';
+        $routerIp = '192.168.100.215';
         $routerUsername = 'admin';
         $routerPassword = '12345';
 
