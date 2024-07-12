@@ -59,13 +59,13 @@
                             <div class="form-floating mb-3">
                                 <input type="text" class="form-control" id="shortname" name="shortname" placeholder=""
                                     required>
-                                <label for="shortname">Title</label>
+                                <label for="shortname">Name</label>
                             </div>
 
                             <div class="form-floating mb-3">
-                                <input type="password" class="form-control" id="secret" name="secret"
+                                <input type="password" class="form-control" id="password" name="password"
                                     placeholder="" required>
-                                <label for="secret">Radius Secret</label>
+                                <label for="password">Password</label>
                             </div>
                             <div class="form-floating mb-3">
                                 <textarea class="form-control" id="description" name="description" placeholder="" rows="3"></textarea>

@@ -27,29 +27,17 @@
 
                             <form method="POST" action="{{ route('customer.store') }}">
                                 @csrf
-                                {{-- <div class="row">
-                                    <div class="col-12 col-md-6 mb-3">
-                                        <div class="p-3 rounded-2 border">
-                                            <h5>Main information</h5>
-                                        </div>
-                                    </div>
-                                    <div class="col-12 col-md-6 mb-3">
-                                        <div class="p-3 rounded-2 border">
-                                            <h5>Comments</h5>
-                                        </div>
-                                    </div>
+
+                                {{-- <div class="form-floating mb-3">
+                                    <input type="text" id="portal_login" name="portal_login" class="form-control"
+                                        value="{{ old('name') }}" placeholder="">
+                                    <label for="portal_login">Portal login</label>
                                 </div> --}}
 
-                                <div class="form-floating mb-3">
-                                    <input type="text" id="plogin" name="plogin" class="form-control"
-                                        value="{{ old('name') }}" placeholder="">
-                                    <label for="plogin">Portal login</label>
-                                </div>
-
                                 <div class="form-floating mb-3 d-flex">
-                                    <input type="text" id="ppassword" name="ppassword" class="form-control"
-                                        value="{{ old('name') }}" placeholder="">
-                                    <label for="ppassword">Portal password</label>
+                                    <input type="text" id="portal_password" name="portal_password"
+                                        class="form-control" value="{{ old('name') }}" placeholder="">
+                                    <label for="portal_password">Portal password</label>
                                     <div class="input-group-append ms-2 form-floating">
                                         <button type="button" class="form-control btn btn-outline-primary"
                                             onclick="generatePassword()">Generate</button>
@@ -152,3 +140,16 @@
         </div>
     </div>
 </x-app-layout>
+
+<script>
+    // generate an 8 character password
+    function generatePassword() {
+        var length = 8;
+        var charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var password = "";
+        for (var i = 0, n = charset.length; i < length; ++i) {
+            password += charset.charAt(Math.floor(Math.random() * n));
+        }
+        document.getElementById("portal_password").value = password;
+    }
+</script>

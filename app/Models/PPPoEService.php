@@ -12,19 +12,10 @@ class PPPoEService extends Model
     protected $table = 'pppoe_services';
     public $timestamps = false;
     protected $fillable = [
-        'interface',
         'service_name',
-        'max_mtu',
-        'max_mru',
-        'profile_id',
-        'disabled',
         'service_duration',
         'duration_unit',
         'service_price',
     ];
 
-    public function profile()
-    {
-        return $this->belongsTo(PPPoEProfile::class);
-    }
 }

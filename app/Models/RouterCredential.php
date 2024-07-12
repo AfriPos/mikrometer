@@ -15,7 +15,10 @@ class RouterCredential extends Model
         'nasname',
         'shortname',
         'type',
+        'radius_server_ip',
         'secret',
+        'username',
+        'password',
         'description'
     ];
 }
