@@ -22,6 +22,7 @@ export default defineConfig({
                 'resources/js/smooth-scrollbar.min.js',
                 'resources/js/soft-ui-dashboard.js',
                 'resources/js/soft-ui-dashboard.min.js',
+                'resources/js/bandwidth-ajax.js',
                 
             ],
             refresh: true,

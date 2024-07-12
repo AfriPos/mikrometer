@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BandwidthController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CustomerController;
@@ -63,7 +64,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/admin/service/{subscriptionid}', [CustomerSubscriptionController::class, 'update'])->name('service.update');
     Route::delete('/admin/service/{subscriptionid}', [CustomerSubscriptionController::class, 'destroy'])->name('service.destroy');
     Route::post('/fetch-subscription', [CustomerSubscriptionController::class, 'show'])->name('service.show');
-    
+
 
 
 
@@ -74,6 +75,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/payment/{payment}/edit', [PaymentController::class, 'edit'])->name('payment.edit');
     Route::put('/admin/payment/{payment}', [PaymentController::class, 'update'])->name('payment.update');
     Route::get('/admin/dispatch', [PaymentController::class, 'dispatch'])->name('payment.dispatch');
+
+    // Bandwidth
+    Route::get('/admin/customer/{id}/bandwidth', [BandwidthController::class, 'fetchBandwidth']);
+    Route::get('/admin/customer/{id}/active-session', [BandwidthController::class, 'fetchaActiveSession'])->name('customer.active-session');
+
+
+
 });
 
 require __DIR__ . '/auth.php';

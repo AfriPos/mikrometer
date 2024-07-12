@@ -1,3 +1,7 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming"></script>
 <x-app-layout>
     <div class="container-fluid p-4">
         <div class="row">
@@ -354,10 +358,25 @@
                                 <!-- Payments include -->
                                 @include('finance.index')
                             </div>
-                            <div id="statistics" class="tab-content" style="display: none;">
-                                <h3>Content for Tab 3</h3>
-                                <p>This is the content for the statistics.</p>
+                              {{-- BANDWIDTH CHART AND STATISTICS --}}
+                        <div id="statistics" class="tab-content" style="display: none;">
+
+                            <div class="card">
+                                <div class="card-header">Bandwidth Usage</div>
+                                <div class="card-body">
+                              
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3" style="width: 100%; height: 25vh;">
+                                        <canvas id="bandwidthChart" style="width: 100%; height: 100%;"></canvas>
+                                        <div id="bandwidthValues" style="text-align: center; margin-top: 10px;"></div>
+                                    </div>
+
+                                </div>
                             </div>
+
+                        </div>
+                        {{-- END OF BANDWIDTH CHART AND STATISTICS --}}
                         </div>
                     </div>
                 </div>
@@ -514,4 +533,66 @@
             targetInput.value = password;
         }
     }
+</script>
+
+<script>
+    const customerId = {{ $customer->id }}; 
+const ctx = document.getElementById('bandwidthChart').getContext('2d');
+const bandwidthChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        datasets: [{
+            label: 'Upload',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            fill: true,
+            data: []
+        }, {
+            label: 'Download',
+            borderColor: 'rgba(153, 102, 255, 1)',
+            backgroundColor: 'rgba(153, 102, 255, 0.2)',
+            fill: true,
+            data: []
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            x: {
+                type: 'realtime',
+                realtime: {
+                    delay: 2000,
+                    refresh: 1000,
+                    onRefresh: function(chart) {
+                        fetch(`/admin/customer/${customerId}/bandwidth`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    const timestamp = Math.floor(Date.now() / 1000) * 1000;
+                                    chart.data.datasets[0].data.push({
+                                        x: timestamp,
+                                        y: parseFloat(data.tx_bits_per_second)
+                                    });
+                                    chart.data.datasets[1].data.push({
+                                        x: timestamp,
+                                        y: parseFloat(data.rx_bits_per_second)
+                                    });
+                                    chart.update();
+                                }
+                            });
+                    }
+                },
+                time: {
+                    displayFormats: {
+                        hour: 'HH:mm'
+                    }
+                }
+            },
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
 </script>
