@@ -25,26 +25,26 @@ class DatabaseSeeder extends Seeder
         // ]);
 
         // group reply seeders
-        // radgroupreply::create([
-        //     'groupname' => 'disabled',
-        //     'attribute' => 'Mikrotik-Address-List',
-        //     'op' => '=',
-        //     'value' => 'MM-blocked-list'
-        // ]);
+        radgroupreply::create([
+            'groupname' => 'disabled',
+            'attribute' => 'Mikrotik-Address-List',
+            'op' => '=',
+            'value' => 'MM-blocked-list'
+        ]);
 
-        // radgroupreply::create([
-        //     'groupname' => 'paused',
-        //     'attribute' => 'Mikrotik-Address-List',
-        //     'op' => '=',
-        //     'value' => 'MM-blocked-list'
-        // ]);
+        radgroupreply::create([
+            'groupname' => 'paused',
+            'attribute' => 'Mikrotik-Address-List',
+            'op' => '=',
+            'value' => 'MM-blocked-list'
+        ]);
 
-        // radgroupreply::create([
-        //     'groupname' => 'active',
-        //     'attribute' => 'Mikrotik-Rate-Limit',
-        //     'op' => '=',
-        //     'value' => 'MM-allowed-list'
-        // ]);
+        radgroupreply::create([
+            'groupname' => 'active',
+            'attribute' => 'Mikrotik-Rate-Limit',
+            'op' => '=',
+            'value' => 'MM-allowed-list'
+        ]);
 
 
         // usergroup seeders
