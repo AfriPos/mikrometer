@@ -3,13 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\PoolModel;
-use App\Models\PPPoEProfile;
 use App\Models\PPPoeService;
 use App\Models\radgroupcheck;
 use App\Models\radgroupreply;
 use App\Models\radusergroup;
 use Illuminate\Http\Request;
-use App\MyHelper\RouterosAPI;
 use App\Models\RouterCredential;
 use Illuminate\Support\Facades\DB;
 
@@ -42,8 +40,6 @@ class PPPoeServiceController extends Controller
 
             DB::beginTransaction();
 
-            // Create an instance of the RouterosAPI class
-            // $api = new RouterosAPI();
 
             // Validate the form data
             $validated = $request->validate([
@@ -70,84 +66,45 @@ class PPPoeServiceController extends Controller
             $limits = $request->rate_download . $request->rate_download_unit . '/' . $request->rate_upload . $request->rate_upload_unit . ' ' . $request->burst_rate_download . $request->burst_rate_download_unit . '/' . $request->burst_rate_upload . $request->burst_rate_upload_unit . ' ' . $request->threshold_download . $request->threshold_download_unit . '/' . $request->threshold_upload . $request->threshold_upload_unit . ' ' . $request->burst_time . '/' . $request->burst_time;
 
 
-            // // Convert rates to kbps
-            // $rate_download = $this->apendParameter($validated['rate_download'], $validated['rate_download_unit']);
-            // $rate_upload = $this->apendParameter($validated['rate_upload'], $validated['rate_upload_unit']);
+            // Convert rates to kbps
+            $rate_download = $this->apendParameter($validated['rate_download'], $validated['rate_download_unit']);
+            $rate_upload = $this->apendParameter($validated['rate_upload'], $validated['rate_upload_unit']);
 
-            // // fetch router login credentials
-            // $routerCredential = RouterCredential::where('ip_address', $request->ip_address)->first();
 
-            // Connect to the RouterOS
-            // if ($api->connect($request->ip_address, $routerCredential['login'], $routerCredential['password'])) {
-            // try {
-            // // Create the PPP profile with additional parameters
-            // $pppoe_profile = $api->comm('/ppp/profile/add', [
-            //     'name' => $validated['service_name'],
-            //     'rate-limit' => "$rate_download/$rate_upload",
-            // ]);
-            // // Create the PPPoE server interface
-            // $pppoe_server = $api->comm('/interface/pppoe-server/server/add', [
-            //     'service-name' => $validated['service_name'],
-            //     'interface' => $validated['interface'],
-            //     'max-mtu' => '1480',
-            //     'max-mru' => '1480',
-            //     'authentication' => 'pap,chap,mschap1,mschap2',
-            //     'default-profile' => $validated['service_name'],
-            //     'disabled' => 'no',
-            // ]);
+                    // save the data to a database
+                    $radgroupcheck = new radgroupcheck();
+                    $radgroupcheck->groupname = $request->service_name;
+                    $radgroupcheck->attribute = "Framed-Protocol";
+                    $radgroupcheck->op = "==";
+                    $radgroupcheck->value = "PPP";
+                    $radgroupcheck->save();
 
-            // Disconnect from the router
-            // $api->disconnect();
+                    // save the data to a database
+                    $radgroupreply = new radgroupreply();
+                    $radgroupreply->groupname = $request->service_name;
+                    $radgroupreply->attribute = "Mikrotik-Rate-Limit";
+                    $radgroupreply->op = "=";
+                    $radgroupreply->value = $limits;
+                    $radgroupreply->save();
 
-            // save the data to a database
-            $radgroupcheck = new radgroupcheck();
-            $radgroupcheck->groupname = $request->service_name;
-            $radgroupcheck->attribute = "Framed-Protocol";
-            $radgroupcheck->op = "==";
-            $radgroupcheck->value = "PPP";
-            $radgroupcheck->save();
+                    // save the data to a database
+                    $radusergroup = new radusergroup();
+                    $radusergroup->username = $request->service_name;
+                    $radusergroup->groupname = $request->service_name;
+                    $radusergroup->priority = $request->priority;
+                    $radusergroup->save();
 
-            // save the data to a database
-            $radgroupreply = new radgroupreply();
-            $radgroupreply->groupname = $request->service_name;
-            $radgroupreply->attribute = "Mikrotik-Rate-Limit";
-            $radgroupreply->op = "=";
-            $radgroupreply->value = $limits;
-            $radgroupreply->save();
+                    $pppoe = new PPPoeService();
+                    $pppoe->service_name = $request->service_name;
+                    $pppoe->service_price = $request->service_price;
+                    $pppoe->service_duration = $request->servie_duration;
+                    $pppoe->duration_unit = $request->servie_duration_unit;
+                    $pppoe->save();
 
-            // save the data to a database
-            $radusergroup = new radusergroup();
-            $radusergroup->username = $request->service_name;
-            $radusergroup->groupname = $request->service_name;
-            $radusergroup->priority = $request->priority;
-            $radusergroup->service_price = $request->service_price;
-            $radusergroup->service_duration = $request->servie_duration;
-            $radusergroup->duration_unit = $request->servie_duration_unit;
-            $radusergroup->save();
+                    DB::commit();
 
-            // $pppoe = new PPPoeService();
-            // $pppoe->interface = $request->interface;
-            // $pppoe->service_name = $request->service_name;
-            // $pppoe->service_price = $request->service_price;
-            // $pppoe->service_duration = $request->servie_duration;
-            // $pppoe->duration_unit = $request->servie_duration_unit;
-            // $pppoe->max_mtu = 1480;
-            // $pppoe->max_mru = 1480;
-            // $pppoe->profile_id = $pppoeprofile->id;
-            // $pppoe->disabled = $request->status;
-            // $pppoe->save();
-
-            DB::commit();
-
-            return redirect()->back()->with('success', 'PPPoE service created successfully!');
-            // } catch (\Throwable $e) {
-            //     DB::rollBack();
-            //     return response()->json(['error' => 'Failed to create PPPoE service!', $e->getMessage()], 500);
-            // }
-            // } else {
-            //     DB::rollBack();
-            //     return redirect()->back()->with('error', 'Failed to connect to the router!');
-            // }
+                    return redirect()->back()->with('success', 'PPPoE service created successfully!');
+              
         } catch (\Throwable $e) {
             DB::rollBack();
             //return response()->json(['error' => 'Error fetching data from RouterOS API!', $e->getMessage()], 500);
@@ -161,12 +118,11 @@ class PPPoeServiceController extends Controller
      */
     public function show(Request $request)
     {
-        $service = radusergroup::where('username', $request->serviceId)->first();
+        $service = PPPoeService::where('service_name', $request->serviceId)->first();
 
         if ($service) {
             // Return the JSON response
             return response()->json([
-                'success' => true,
                 'service' => $service,
             ]);
         } else {

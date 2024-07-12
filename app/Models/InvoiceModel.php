@@ -5,16 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class paymentModel extends Model
+class InvoiceModel extends Model
 {
     use HasFactory;
-    protected $table = 'payments';
+    protected $table = 'invoices';
     protected $fillable = [
         'customer_id',
         'amount',
-        'payment_method',
-        'transaction_id',
-        'comment',
+        'due_date',
+        'status',
+        'type',
     ];
     public function customer()
     {

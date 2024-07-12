@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\CustomerModel;
 use App\Models\CustomerSubscriptionModel;
 use App\Models\PPPoEService;
@@ -42,37 +43,42 @@ class CustomerSubscriptionController extends Controller
             // Validate form data
             $request->validate([
                 'service' => 'required|string|max:255',
-                'serviceippool' => 'required|string|max:255',
+                'ipaddress' => 'required|string|max:255',
                 'pppoe_login' => 'required|string|max:255',
                 'pppoe_password' => 'required|string|max:255',
                 'service_price' => 'required|integer',
             ]);
 
-            $allocatedIp = $this->allocateIpAddress($customerId);
-            $network = $request->input('serviceippool');
-            $networkip = $this->getNetworkIp($network);
+            $this->allocateIpAddress($request->ipaddress, $customerId);
+            // $network = $request->input('serviceippool');
+            // $networkip = $this->getNetworkIp($network);
 
-            // // Create subscription
-            // $subscription = new CustomerSubscriptionModel();
-            // $subscription->pppoe_id = $request->input('service');
-            // $subscription->pppoe_login = $request->input('pppoe_login');
-            // $subscription->pppoe_password = $request->input('pppoe_password');
-            // $subscription->service_price = $request->input('service_price');
-            // $subscription->local_address = $networkip;
-            // $subscription->remote_address = $allocatedIp;
-            // $subscription->customer_id = $customerId;
-            // $subscription->start_date = now();
-            // $subscription->end_date = now()->addMonth(); // Example for a 1-month duration
-            // $subscription->invoiced_till = now(); // Set this based on your logic
-            // $subscription->status = 'active';
-            // $subscription->save();
+            $subscription = new CustomerSubscriptionModel();
+            $subscription->service = $request->service;
+            $subscription->service_price = $request->service_price;
+            $subscription->start_date = now();
+            $subscription->pppoe_password = $request->pppoe_password;
+            $subscription->pppoe_login = $request->pppoe_login;
+            $subscription->status = 'active';
+            $subscription->ipaddress = $request->ipaddress;
+            $subscription->customer_id = $customerId;
+            $subscription->save();
 
             $radreply = new radreply();
             $radreply->username = $request->pppoe_login;
             $radreply->attribute = 'Framed-IP-Address';
             $radreply->op = ':=';
-            $radreply->value = $allocatedIp;
+            $radreply->value = $request->ipaddress;
+            $radreply->customer_subscription_id = $subscription->id;
             $radreply->save();
+
+            // $radreply1 = new radreply();
+            // $radreply1->username = $request->pppoe_login;
+            // $radreply1->attribute = 'Address-List';
+            // $radreply1->op = ':=';
+            // $radreply1->value = 'active';
+            // $radreply1->customer_subscription_id = $subscription->id;
+            // $radreply1->save();
 
 
             $radcheck = new radcheck();
@@ -80,6 +86,7 @@ class CustomerSubscriptionController extends Controller
             $radcheck->attribute = 'Cleartext-Password';
             $radcheck->op = ':=';
             $radcheck->value = $request->pppoe_password;
+            $radcheck->customer_subscription_id = $subscription->id;
             $radcheck->save();
 
             $radcheck2 = new radcheck();
@@ -87,15 +94,17 @@ class CustomerSubscriptionController extends Controller
             $radcheck2->attribute = 'User-Profile';
             $radcheck2->op = ':=';
             $radcheck2->value = $request->service;
+            $radcheck2->customer_subscription_id = $subscription->id;
             $radcheck2->save();
+
             DB::commit();
 
             // return response()->json(['success' => 'Service created and activated successfully.']);
-            return redirect()->back()->with('success', 'Service created and activated successfully.');
+            return redirect()->back()->with('success', 'Service created successfully.');
         } catch (\Throwable $th) {
             DB::rollBack();
             dd($th->getMessage());
-            // return response()->json(['error' => $th->getMessage()], 500);
+            // return redirect()->back()->with('error', 'An error occured while creating the service');
         }
     }
 
@@ -134,7 +143,98 @@ class CustomerSubscriptionController extends Controller
      */
     public function update(Request $request, CustomerSubscriptionModel $subscriptionid)
     {
-        //
+        // dd($request->all());
+
+        // begin transaction
+        DB::beginTransaction();
+
+        try {
+            // Validate form data
+            $validatedData = $request->validate([
+                'status' => 'required|string|max:255',
+                'ipaddress' => 'required|string|ip|max:255',
+                'pppoe_login' => 'required|string|max:255',
+                'pppoe_password' => 'required|string|max:255',
+                'service_price' => 'required|integer',
+            ]);
+
+            // Release previously assigned IP address if new IP is different
+            if ($subscriptionid->ipaddress != $validatedData['ipaddress']) {
+                $this->releaseIpAddress($subscriptionid->username);
+
+                // Allocate new IP address
+                $this->allocateIpAddress($validatedData['ipaddress'], $subscriptionid->pppoe_login);
+
+                // Update radreply table
+                $radreply = Radreply::where('username', $subscriptionid->pppoe_login)
+                    ->where('attribute', 'Framed-IP-Address')
+                    ->first();
+                if ($radreply) {
+                    $radreply->update([
+                        'value' => $validatedData['ipaddress']
+                    ]);
+                } else {
+                    Radreply::create([
+                        'username' => $subscriptionid->pppoe_login,
+                        'attribute' => 'Framed-IP-Address',
+                        'op' => '=',
+                        'value' => $validatedData['ipaddress']
+                    ]);
+                }
+            }
+
+            // Update the pppoe_password if new password is different
+            if ($subscriptionid->pppoe_password != $validatedData['pppoe_password']) {
+                $radcheck = Radcheck::where('username', $subscriptionid->pppoe_login)
+                    ->where('attribute', 'Cleartext-Password')
+                    ->first();
+                if ($radcheck) {
+                    $radcheck->update([
+                        'value' => $validatedData['pppoe_password']
+                    ]);
+                } else {
+                    Radcheck::create([
+                        'username' => $subscriptionid->pppoe_login,
+                        'attribute' => 'Cleartext-Password',
+                        'op' => '=',
+                        'value' => $validatedData['pppoe_password']
+                    ]);
+                }
+            }
+
+
+            // Update the pppoe_login if new login is different
+            if ($subscriptionid->pppoe_login != $validatedData['pppoe_login']) {
+                // Update Radcheck table
+                $radcheckRecords = Radcheck::where('username', $subscriptionid->pppoe_login)->get();
+
+                foreach ($radcheckRecords as $radcheck) {
+                    $radcheck->update([
+                        'username' => $validatedData['pppoe_login']
+                    ]);
+                }
+
+                // Update Radreply table
+                $radreplyRecords = Radreply::where('username', $subscriptionid->pppoe_login)->get();
+
+                foreach ($radreplyRecords as $radreply) {
+                    $radreply->update([
+                        'username' => $validatedData['pppoe_login']
+                    ]);
+                }
+            }
+
+            // Update subscription details
+            $subscriptionid->update($validatedData);
+
+            DB::commit();
+            // dd($subscriptionid);
+            return redirect()->back()->with('success', 'Customer subscription updated successfully!');
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            dd($th);
+            // return redirect()->back()->with('error', 'An error occured while creating the service');
+        }
     }
 
     /**
@@ -142,8 +242,14 @@ class CustomerSubscriptionController extends Controller
      */
     public function destroy(CustomerSubscriptionModel $subscriptionid)
     {
+        $radcheck = radcheck::where('customer_subscription_id', $subscriptionid->id)->get();
+        $radreply = radreply::where('customer_subscription_id', $subscriptionid->id)->get();
         // Release IP addresses assigned to the customer
         $this->releaseIpAddress($subscriptionid->customer->id);
+
+        // Delete radcheck and radreply records
+        $radcheck->each->delete();
+        $radreply->each->delete();
 
         // Delete the customer subscription
         $subscriptionid->delete();
@@ -152,27 +258,15 @@ class CustomerSubscriptionController extends Controller
     }
 
     // allocates an ip to a customer
-    private function allocateIpAddress($customerId)
+    private function allocateIpAddress($ipaddress, $customerId)
     {
-        $ipAddress = DB::table('ip_addresses')
-            ->where('is_used', false)
-            ->where('usable', true)
-            ->first();
-
-
-        if ($ipAddress) {
-            DB::table('ip_addresses')
-                ->where('id', $ipAddress->id)
-                ->update([
-                    'is_used' => true,
-                    'customer_id' => $customerId,
-                    'allocated_at' => now()
-                ]);
-
-            return $ipAddress->ip_address;
-        }
-
-        return null; // No available IP address
+        DB::table('ip_addresses')
+            ->where('ip_address', $ipaddress)
+            ->update([
+                'is_used' => true,
+                'customer_id' => $customerId,
+                'allocated_at' => now()
+            ]);
     }
 
     // releases all ips assinged to a customer

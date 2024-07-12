@@ -10,16 +10,15 @@ class CustomerSubscriptionModel extends Model
     use HasFactory;
     protected $table = 'customer_subscription';
     protected $fillable = [
-        'pppoe_id',
+        'service',
         'start_date',
         'end_date',
         'invoiced_till',
         'pppoe_password',
         'pppoe_login',
         'status',
-        'local_address',
-        'remote_address',
-        'customer_id',
+        'service_price',
+        'ipaddress',
     ];
 
     public function pppoeservice()
@@ -30,10 +29,5 @@ class CustomerSubscriptionModel extends Model
     public function customer()
     {
         return $this->belongsTo(CustomerModel::class);
-    }
-
-    public function profile()
-    {
-        return $this->hasOneThrough(ProfileModel::class, PPPoEService::class, 'id', 'id', 'pppoe_id', 'profile_id');
     }
 }

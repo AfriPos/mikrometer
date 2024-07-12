@@ -13,19 +13,18 @@ return new class extends Migration
     {
         Schema::create('customer_subscription', function (Blueprint $table) {
             $table->id();
-            $table->date('start_date');
-            $table->date('end_date');
-            $table->date('invoiced_till');
+            $table->dateTime('start_date');
+            $table->dateTime('end_date')->nullable();
+            $table->dateTime('invoiced_till')->nullable();
             $table->string('pppoe_login');
             $table->string('pppoe_password');
-            $table->string('local_address');
-            $table->string('remote_address');
-            $table->string('service_price');
             $table->string('status');
-            $table->unsignedBigInteger('customer_id')->nullable();
+            $table->string('ipaddress');
+            $table->string('service');
+            $table->unsignedBigInteger('customer_id');
             $table->foreign('customer_id')->references('id')->on('customers');
-            $table->unsignedBigInteger('pppoe_id')->nullable();
-            $table->foreign('pppoe_id')->references('id')->on('pppoe_services');
+            $table->integer('service_price');
+            $table->foreign('service')->references('service_name')->on('pppoe_services');
             $table->timestamps();
         });
     }

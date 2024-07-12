@@ -32,8 +32,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/router', [RouterController::class, 'index'])->name('router.index');
     Route::get('/admin/router/create', [RouterController::class, 'create'])->name('router.create');
     Route::post('/admin/router', [RouterController::class, 'store'])->name('router.store');
-    Route::get('/admin/router/{id}/edit', [RouterController::class, 'edit'])->name('router.edit');
-    Route::put('/admin/router/{id}', [RouterController::class, 'update'])->name('router.update');
+    Route::get('/admin/router/{nas}/edit', [RouterController::class, 'edit'])->name('router.edit');
+    Route::put('/admin/router/{nas}', [RouterController::class, 'update'])->name('router.update');
     Route::delete('/admin/router/{id}', [RouterController::class, 'destroy'])->name('router.destroy');
     Route::post('/fetch-interfaces', [RouterController::class, 'fetchInterfaces'])->name('fetch.interfaces');
 
@@ -70,7 +70,9 @@ Route::middleware('auth')->group(function () {
     // Payment
     Route::get('/admin/payment', [PaymentController::class, 'index'])->name('payment.index');
     Route::get('/admin/payment/create', [PaymentController::class, 'create'])->name('payment.create');
-    Route::post('/admin/payment', [PaymentController::class, 'store'])->name('payment.store');
+    Route::post('/admin/payment/{customer}', [PaymentController::class, 'store'])->name('payment.store');
+    Route::get('/admin/payment/{payment}/edit', [PaymentController::class, 'edit'])->name('payment.edit');
+    Route::put('/admin/payment/{payment}', [PaymentController::class, 'update'])->name('payment.update');
     Route::get('/admin/dispatch', [PaymentController::class, 'dispatch'])->name('payment.dispatch');
 });
 

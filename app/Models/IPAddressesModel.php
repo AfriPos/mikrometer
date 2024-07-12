@@ -17,5 +17,11 @@ class IPAddressesModel extends Model
         'usable',
         'pool_id',
     ];
+
+    public function pool()
+    {
+        return $this->belongsTo(PoolModel::class);
+    }
+
 }
 

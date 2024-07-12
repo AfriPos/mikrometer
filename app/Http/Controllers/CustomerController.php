@@ -4,11 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\CustomerModel;
 use App\Models\CustomerSubscriptionModel;
+use App\Models\InvoiceModel;
 use App\Models\IPAddressesModel;
+use App\Models\paymentModel;
 use App\Models\PoolModel;
 use App\Models\PPPoEProfile;
+use App\Models\PPPoEService;
+use App\Models\radreply;
 use App\Models\radusergroup;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CustomerController extends Controller
 {
@@ -35,20 +40,54 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         try {
+            // Start a database transaction
+            DB::beginTransaction();
+
+
             // Validate the incoming request data
             $validatedData = $request->validate([
+                'portal_login' => 'required|string|max:255',
+                'portal_password' => 'nullable|string|max:255',
+                'status' => 'required|in:new,active,blocked,inactive',
                 'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:customers,email',
+                'email' => 'required|email|unique:customers,email,',
                 'phone' => 'required|string|max:20',
+                'service_type' => 'nullable|in:recurring,prepaid',
+                'billing_email' => 'nullable|email',
+                'street' => 'nullable|string|max:255',
+                'zip_code' => 'nullable|string|max:20',
+                'city' => 'nullable|string|max:255',
+                'geo_data' => 'nullable|string|max:255',
+                'category' => 'nullable|in:individual,business',
+                'mpesa_phone' => 'nullable|string|max:20',
+                'dob' => 'nullable|date',
+                'id_number' => 'nullable|string|max:255',
             ]);
 
             // Create a new customer record
             $customer = CustomerModel::create($validatedData);
 
+            radreply::created([
+                'username' => $customer->portal_login,
+                'attribute' => 'Mikrotik-Address-List',
+                'op' => '=',
+                'value' => 'MM-blocked-list'
+            ]);
+
+            // Update the portal_login with the newly created customer's ID
+            $customer->portal_login = $customer->id;
+            $customer->save();
+            // Commit the transaction
+            DB::commit();
+
             // Redirect to the edit route of the customer using the recently added id
             return redirect()->route('customer.edit', $customer->id)->with('success', 'Customer added successfully!');
         } catch (\Throwable $th) {
-            return redirect()->back()->withErrors(['error' => 'An error occurred: ' . $th->getMessage()]);
+            // Rollback the transaction if an exception occurs
+            DB::rollBack();
+
+            // dd($th);
+            return redirect()->back()->withErrors(['error' => 'An error occurred']);
         }
     }
 
@@ -66,10 +105,37 @@ class CustomerController extends Controller
     public function edit(CustomerModel $customer)
     {
         $pppoeprofiles = radusergroup::all();
-        $services = CustomerSubscriptionModel::where('customer_id', $customer->id)->get();
-        $ipaddress = IPAddressesModel::where('customer_id', $customer->id)->first();
+        // $subscription = ;
+        $ipaddress = IPAddressesModel::where('customer_id', $customer->id)->first(); // Fetch all pools
+        // Fetch all pools
         $ippools = PoolModel::all();
-        return view('customer.edit', compact('customer', 'pppoeprofiles', 'services', 'ipaddress', 'ippools'));
+        $subscriptions = CustomerSubscriptionModel::where('customer_id', $customer->id)->get();
+
+        $invoices = InvoiceModel::where('customer_id', $customer->id)->get();
+
+        $payments = paymentModel::where('customer_id', $customer->id)->get();
+        // foreach ($invoices as $invoice) {
+        //     $invoice->payments = $payment;
+        // }
+
+        // Initialize an array to hold the pools and their IPs
+        $poolsWithIps = [];
+
+        // Iterate through each pool and fetch 15 IPs where customer_id is null
+        foreach ($ippools as $pool) {
+            $ipaddresses = IPAddressesModel::where('pool_id', $pool->id)
+                ->whereNull('customer_id')
+                ->take(15)
+                ->get();
+
+            // Add the pool and its IPs to the array
+            $poolsWithIps[] = [
+                'pool' => $pool,
+                'ips' => $ipaddresses,
+            ];
+        }
+
+        return view('customer.edit', compact('customer', 'pppoeprofiles', 'subscriptions', 'ipaddress', 'ippools', 'poolsWithIps', 'invoices', 'payments'));
     }
 
     /**
@@ -80,18 +146,42 @@ class CustomerController extends Controller
         try {
             // Validate the incoming request data
             $validatedData = $request->validate([
+                'portal_login' => 'required|string|max:255',
+                'portal_password' => 'nullable|string|max:255',
+                'status' => 'required|in:new,active,blocked,inactive',
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:customers,email,' . $customer->id,
                 'phone' => 'required|string|max:20',
+                'service_type' => 'nullable|in:recurring,prepaid',
+                'billing_email' => 'nullable|email',
+                'street' => 'nullable|string|max:255',
+                'zip_code' => 'nullable|string|max:20',
+                'city' => 'nullable|string|max:255',
+                'geo_data' => 'nullable|string|max:255',
+                'category' => 'nullable|in:individual,business',
+                'mpesa_phone' => 'nullable|string|max:20',
+                'dob' => 'nullable|date',
+                'id_number' => 'nullable|string|max:255',
             ]);
-
+            
+            $radreply = radreply::updateOrCreate(
+                ['username' => $request->portal_login, 'attribute' => 'Mikrotik-Address-List'],
+                ['value' => $request->status === 'active' ? 'MM-allowed-list' : 'MM-blocked-list']
+            );
+            
             // Update the customer record
             $customer->update($validatedData);
+
+            // if (in_array($status, ['blocked', 'inactive', 'active'])) {
+            // Update the radcheck table with the new status
+
+            // }
 
             // Redirect back to the form with a success message
             return redirect()->back()->with('success', 'Customer Data has been updated successfully!');
         } catch (\Throwable $th) {
-            return redirect()->back()->withErrors(['error' => 'An error occurred: ' . $th->getMessage()]);
+            dd($th);
+            // return redirect()->back()->withErrors(['error' => 'An error occurred: ' . $th->getMessage()]);
         }
     }
 

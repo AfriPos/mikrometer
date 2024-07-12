@@ -13,16 +13,13 @@ return new class extends Migration
     {
         Schema::create('pppoe_services', function (Blueprint $table) {
             $table->id();
-            $table->string('interface');
-            $table->string('service_name');
-            $table->integer('max_mtu');
-            $table->integer('max_mru');
+            $table->string('service_name')->index();
             $table->string('service_price');
             $table->integer('service_duration');
             $table->string('duration_unit');
-            $table->unsignedBigInteger('profile_id');
-            $table->string('disabled');
-            $table->foreign('profile_id')->references('id')->on('pppoe_profiles');
+            // $table->string('disabled');
+            // $table->unsignedBigInteger('profile_id');
+            // $table->foreign('profile_id')->references('id')->on('pppoe_profiles');
         });
     }
 

@@ -110,22 +110,173 @@
                             <form class="pt-3" action="{{ route('customer.update', $customer->id) }}" method="POST">
                                 @method('PUT')
                                 @csrf
-                                <div class="form-floating mb-3">
-                                    <input type="text" id="name" name="name" class="form-control"
-                                        value="{{ $customer->name }}" placeholder="" required>
-                                    <label for="name">Name</label>
-                                </div>
 
-                                <div class="form-floating mb-3">
-                                    <input type="email" id="email" name="email" class="form-control"
-                                        value="{{ $customer->email }}" placeholder="" required>
-                                    <label for="email">Email</label>
-                                </div>
+                                <div class="row">
+                                    <div class="col-12 col-md-6 mb-3">
+                                        <div class="row">
+                                            <div class="mb-3 col-md-12">
+                                                <div class="p-3 rounded-2 border">
+                                                    <h5>Main information</h5>
 
-                                <div class="form-floating mb-3">
-                                    <input type="text" id="phone" name="phone" class="form-control"
-                                        value="{{ $customer->phone }}" placeholder="" required>
-                                    <label for="phone">Phone</label>
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="portal_login" name="portal_login"
+                                                            class="form-control" value="{{ $customer->portal_login }}"
+                                                            placeholder="">
+                                                        <label for="portal_login">Portal login</label>
+                                                    </div>
+
+                                                    <div class="form-floating mb-3 d-flex">
+                                                        <input type="text" id="portal_password"
+                                                            name="portal_password" class="form-control"
+                                                            value="{{ $customer->portal_password }}" placeholder="">
+                                                        <label for="portal_password">Portal password</label>
+                                                        <div class="input-group-append ms-2 form-floating">
+                                                            <button type="button"
+                                                                class="form-control btn btn-outline-primary"
+                                                                data-target="portal_password"
+                                                                onclick="generatePassword()">Generate</button>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="form-floating mb-3">
+                                                        <select id="status" name="status" class="form-control">
+                                                            <option value="new"
+                                                                {{ $customer->status == 'new' ? 'selected' : '' }}>New
+                                                                (Not yet connected)</option>
+                                                            <option value="active"
+                                                                {{ $customer->status == 'active' ? 'selected' : '' }}>
+                                                                Active</option>
+                                                            <option value="blocked"
+                                                                {{ $customer->status == 'blocked' ? 'selected' : '' }}>
+                                                                Blocked</option>
+                                                            <option value="inactive"
+                                                                {{ $customer->status == 'inactive' ? 'selected' : '' }}>
+                                                                Inactive (Doesn't use the service)</option>
+                                                        </select>
+                                                        <label for="status">Status</label>
+                                                    </div>
+
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="name" name="name"
+                                                            class="form-control" value="{{ $customer->name }}"
+                                                            placeholder="" required>
+                                                        <label for="name">Name</label>
+                                                    </div>
+
+                                                    <div class="form-floating mb-3">
+                                                        <input type="email" id="email" name="email"
+                                                            class="form-control" value="{{ $customer->email }}"
+                                                            placeholder="" required>
+                                                        <label for="email">Email</label>
+                                                    </div>
+
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="phone" name="phone"
+                                                            class="form-control" value="{{ $customer->phone }}"
+                                                            placeholder="" required>
+                                                        <label for="phone">Phone</label>
+                                                    </div>
+
+                                                    <div class="form-floating mb-3">
+                                                        <select id="service_type" name="service_type"
+                                                            class="form-control">
+                                                            <option value="">Select Service Type</option>
+                                                            <option value="recurring">Recurring</option>
+                                                            <option value="prepaid">Prepaid</option>
+                                                        </select>
+                                                        <label for="service_type">Service Type</label>
+                                                    </div>
+
+
+                                                    <div class="form-floating mb-3">
+                                                        <input type="email" id="billing_email" name="billing_email"
+                                                            class="form-control"
+                                                            value="{{ $customer->billing_email }}" placeholder="">
+                                                        <label for="billing_email">Billing Email</label>
+                                                    </div>
+
+
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="street" name="street"
+                                                            class="form-control" value="{{ $customer->street }}"
+                                                            placeholder="">
+                                                        <label for="street">Street</label>
+                                                    </div>
+
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="zip_code" name="zip_code"
+                                                            class="form-control" value="{{ $customer->zip_code }}"
+                                                            placeholder="">
+                                                        <label for="zip_code">Zip Code</label>
+                                                    </div>
+
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="city" name="city"
+                                                            class="form-control" value="{{ $customer->city }}"
+                                                            placeholder="">
+                                                        <label for="city">City</label>
+                                                    </div>
+
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="geo_data" name="geo_data"
+                                                            class="form-control" value="{{ $customer->geo_data }}"
+                                                            placeholder="">
+                                                        <label for="geo_data">Geo Data</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <div class="p-3 rounded-2 border">
+                                                    <h5>Map</h5>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6 mb-3">
+                                        <div class="row">
+                                            <div class="mb-3 col-md-12">
+                                                <div class="p-3 rounded-2 border">
+                                                    <h5>Comments</h5>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <div class="p-3 rounded-2 border">
+                                                    <h5>Aditional Information</h5>
+
+                                                    <div class="form-floating mb-3">
+                                                        <select id="category" name="category" class="form-control">
+                                                            <option value="">Select Category</option>
+                                                            <option value="individual">Individual</option>
+                                                            <option value="business">Business</option>
+                                                        </select>
+                                                        <label for="category">Category</label>
+                                                    </div>
+
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="mpesa_phone" name="mpesa_phone"
+                                                            class="form-control" value="{{ $customer->mpesa_phone }}"
+                                                            placeholder="">
+                                                        <label for="mpesa_phone">M-Pesa Phone Number</label>
+                                                    </div>
+
+                                                    <div class="form-floating mb-3">
+                                                        <input type="date" id="dob" name="dob"
+                                                            class="form-control" value="{{ $customer->dob }}"
+                                                            placeholder="">
+                                                        <label for="dob">Date of Birth</label>
+                                                    </div>
+
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="id_number" name="id_number"
+                                                            class="form-control" value="{{ $customer->id_number }}"
+                                                            placeholder="">
+                                                        <label for="id_number">Identification Number</label>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="d-grid gap-2 col-6 mx-auto">
@@ -151,190 +302,74 @@
                                     </div>
                                 </div>
 
-                                <div class="table-responsive">
-                                    <table class="table align-items-center mb-0">
-                                        <thead>
-                                            <th>Status</th>
-                                            <th>Service</th>
-                                            <th>Start Date</th>
-                                            <th>End Date</th>
-                                            <th>Invoiced Until</th>
-                                            <th>IP Address</th>
-                                            <th>Action</th>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($services as $service)
-                                                <tr>
-                                                    <td>
-                                                        <span
-                                                            class="badge {{ $service->status == 'active' ? 'badge-sm bg-gradient-success' : 'badge-sm bg-gradient-secondary' }}">{{ $service->status }}</span>
-                                                    </td>
-                                                    <td>{{ $service->pppoeservice->profile->profile_name }}</td>
-                                                    <td>{{ $service->start_date }}</td>
-                                                    <td>{{ $service->end_date }}</td>
-                                                    <td>{{ $service->invoiced_till }}</td>
-                                                    <td>{{ $ipaddress->ip_address }}</td>
-                                                    <td>
-                                                        <div class="btn-group" role="group"
-                                                            aria-label="Basic example">
-                                                            <a class="btn badge-sm bg-gradient-secondary"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#editcustomerservice"
-                                                                onclick="fetchSubscription({{ $service->id }})">Edit</a>
-                                                            <a class="btn badge-sm bg-gradient-secondary"
-                                                                href="#"
-                                                                onclick="confirmDelete(event, '{{ route('service.destroy', $service->id) }}')">
-                                                                <i class="fa fa-times"></i>
-                                                            </a>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <!-- Subscription include -->
+                                @include('subscription.index')
+
                             </div>
                         </div>
                         <div id="billing" class="tab-content" style="display: none;">
-                            <h3>Content for Tab 3</h3>
-                            <p>This is the content for the Billing.</p>
-                        </div>
-                        <div id="statistics" class="tab-content" style="display: none;">
-                            <h3>Content for Tab 3</h3>
-                            <p>This is the content for the statistics.</p>
+                            <div
+                                class="rounded-2 mt-2 ps-3 pe-3 pt-3 d-flex justify-content-between bg-secondary-subtle text-secondary-emphasis">
+                                <div>Account balance</div>
+                                <div>
+                                    {{-- <div class="btn-group">
+                                        <div class="input-group mb-3">
+                                            <span class="input-group-text" id="basic-addon1"><i
+                                                    class="fa-solid fa-magnifying-glass"></i></span>
+                                            <input type="text" class="form-control" placeholder="Search"
+                                                aria-label="Username" aria-describedby="basic-addon1">
+                                        </div>
+                                    </div> --}}
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-secondary dropdown-toggle" type="button"
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                            Types
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="javascript:;">Payments</a></li>
+                                            <li><a class="dropdown-item" href="javascript:;">Recurring invoice</a>
+                                            </li>
+                                            <li><a class="dropdown-item" href="javascript:;">One time invoice</a></li>
+                                            <li><a class="dropdown-item" href="javascript:;">Credit note</a></li>
+                                            <li><a class="dropdown-item" href="javascript:;">Future items</a></li>
+                                        </ul>
+                                    </div>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-secondary dropdown-toggle" type="button"
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                            Add Document
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="javascript:;">One time invoice</a></li>
+                                            <li><a class="dropdown-item" href="javascript:;">Recurring invoice</a></li>
+                                            <li><a class="dropdown-item" href="javascript:;">Credit note</a></li>
+                                            <li><a class="dropdown-item" href="javascript:;" data-bs-toggle="modal"
+                                                    data-bs-target="#createpayment">Payments</a></li>
+                                            <li><a class="dropdown-item" href="javascript:;">Future items</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pt-3">
+                                <!-- Payments include -->
+                                @include('finance.index')
+                            </div>
+                            <div id="statistics" class="tab-content" style="display: none;">
+                                <h3>Content for Tab 3</h3>
+                                <p>This is the content for the statistics.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
     </div>
 </x-app-layout>
 
-<!-- Create service Modal -->
-<div class="modal fade" id="addcustomerservice" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="staticBackdropLabel">Create Service</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><i
-                        class="fa-solid fa-xmark"></i></button>
-            </div>
-            <form method="POST" action="{{ route('service.store', ['customer' => $customer->id]) }}">
-                <div class="modal-body">
-                    @csrf
-                    <div class="form-floating mb-3 d-flex">
-                        <select class="form-control" id="service" name="service" required
-                            onchange="logSelectedOption(this)">
-                            <option value="">Select Service</option>
-                            @foreach ($pppoeprofiles as $pppoeprofile)
-                                <option value="{{ $pppoeprofile->username }}" {{-- @if ($customer->pppoeprofile_id == $pppoeprofile->id) selected @endif --}}>
-                                    {{ $pppoeprofile->username }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <label for="service">Select Service</label>
-                    </div>
-
-                    <div class="form-floating mb-3 d-flex">
-                        <select class="form-control" id="serviceippool" name="serviceippool" required>
-                            <option value="">Select IP Pool</option>
-                            @foreach ($ippools as $ippool)
-                                <option value="{{ $ippool->network }}">
-                                    {{ $ippool->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <label for="serviceippool">Select IP Pool</label>
-                    </div>
-
-                    <div class="form-floating mb-3 d-flex">
-                        <input type="number" id="service_price" name="service_price" class="form-control"
-                            placeholder="">
-                        <label for="service_price">Service Price</label>
-                    </div>
-
-                    <div class="form-floating mb-3 d-flex">
-                        <input type="text" id="pppoe_login" name="pppoe_login" class="form-control"
-                            value={{ $customer->id }} placeholder="">
-                        <label for="pppoe_login">PPPoE Login</label>
-                    </div>
-
-                    <div class="form-floating mb-3 d-flex">
-                        <input type="text" id="pppoe_password" name="pppoe_password" class="form-control"
-                            placeholder="" required autocomplete="off">
-                        <label for="pppoe_password" class="m2-2">PPPoE Password</label>
-                        <div class="input-group-append ms-2 form-floating">
-                            <button type="button" class="form-control btn btn-outline-primary"
-                                onclick="generatePassword()">Generate</button>
-                        </div>
-                    </div>
-
-                </div>
-                <div class="modal-footer d-flex justify-content-between">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Create</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Edit service Modal -->
-<div class="modal fade" id="editcustomerservice" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title fs-5" id="staticBackdropLabel">Edit Service</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><i
-                        class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="modal-body">
-                <form method="POST" action="{{ route('service.store', ['customer' => $customer->id]) }}">
-                    @csrf
-                    <div class="form-floating mb-3 d-flex">
-                        <select class="form-control" id="serviceippool" name="serviceippool" required>
-                            <option value="">Select IP Pool</option>
-                            @foreach ($ippools as $ippool)
-                                <option value="{{ $ippool->network }}">
-                                    {{ $ippool->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <label for="serviceippool">Select IP Pool</label>
-                    </div>
-
-                    <div class="form-floating mb-3 d-flex">
-                        <input type="number" id="service_price" name="service_price" class="form-control"
-                            placeholder="" value="{{ $services }}">
-                        <label for="service_price">Service Price</label>
-                    </div>
-
-                    <div class="form-floating mb-3 d-flex">
-                        <input type="text" id="pppoe_login" name="pppoe_login" class="form-control"
-                            value={{ $customer->id }} placeholder="">
-                        <label for="pppoe_login">PPPoE Login</label>
-                    </div>
-
-                    <div class="form-floating mb-3 d-flex">
-                        <input type="text" id="pppoe_password" name="pppoe_password" class="form-control"
-                            placeholder="" required autocomplete="off">
-                        <label for="pppoe_password" class="m2-2">PPPoE Password</label>
-                        <div class="input-group-append ms-2 form-floating">
-                            <button type="button" class="form-control btn btn-outline-primary"
-                                onclick="generatePassword()">Generate</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer d-flex justify-content-between">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                {{-- <button type="button" class="btn btn-primary" href="/service/{{ $service->id }}/edit">Create</button> --}}
-            </div>
-
-        </div>
-    </div>
-</div>
+<!-- Subscription create modal include -->
+@include('subscription.create')
+<!-- payment create modal include -->
+@include('finance.payments.create')
 
 <script>
     function changeActive(element, tabId) {
@@ -391,36 +426,6 @@
         }
     });
 
-    // Fetch the selected pppoe data when it is selected
-    function logSelectedOption(selectElement) {
-        var serviceId = selectElement.value;
-        if (serviceId) {
-            fetch('{{ route('pppoe.show') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        serviceId: serviceId
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        document.getElementById('service_price').value = data.service.service_price;
-                    } else {
-                        alert('Failed to fetch service data');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching  service data:', error);
-                    alert('Failed to fetch  service data');
-                });
-        } else {
-            $('#service-details').html('');
-        }
-    }
 
     // fetch the subscription data
     function fetchSubscription(subscriptionid) {
@@ -438,9 +443,11 @@
             .then(data => {
                 if (data.success) {
                     console.log(data.subscription.pppoe_password);
-                    document.getElementById('pppoe_password').value = data.subscription.pppoe_password;
-                    document.getElementById('service_price').value = data.subscription.service_price;
-                    // document.getElementById('serviceippool').value = data.network;
+
+
+                    document.querySelector('.edit_pppoe_password').value = data.subscription.pppoe_password;
+                    document.querySelector('.edit_service_price').value = data.subscription
+                        .service_price; // document.getElementById('serviceippool').value = data.network;
                 } else {
                     alert('Failed to fetch service data');
                 }
@@ -487,5 +494,24 @@
                 form.submit();
             }
         });
+    }
+
+    // Generate an 8 character password
+    function generatePassword(button) {
+        var length = 8;
+        var charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var password = "";
+        for (var i = 0, n = charset.length; i < length; ++i) {
+            password += charset.charAt(Math.floor(Math.random() * n));
+        }
+
+        // Get the id of the target input field from the button's data-target attribute
+        var targetInputId = button.getAttribute('data-target');
+        var targetInput = document.getElementById(targetInputId);
+
+        // Set the generated password to the target input field
+        if (targetInput) {
+            targetInput.value = password;
+        }
     }
 </script>
