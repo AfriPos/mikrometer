@@ -199,10 +199,86 @@
                             <h3>Content for Tab 3</h3>
                             <p>This is the content for the Billing.</p>
                         </div>
+                        {{-- BANDWIDTH CHART AND STATISTICS --}}
                         <div id="statistics" class="tab-content" style="display: none;">
-                            <h3>Content for Tab 3</h3>
-                            <p>This is the content for the statistics.</p>
+
+                            <div class="card">
+                                <div class="card-header">Bandwidth Usage</div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <table class="table align-items-center mb-0">
+                                            <thead>
+                                                <th>Login</th>
+                                                <th>In</th>
+                                                <th>Out</th>
+                                                <th>Started at</th>
+                                                <th>Time</th>
+                                                <th>IP</th>
+                                                <th>NAS</th>
+                                            </thead>
+                                            <tbody id="activeSessionData">
+
+                                            </tbody>
+
+                                        </table>
+
+                                        <script>
+                                            function fetchActiveSession() {
+                                                fetch(`/bandwidth/active-session/{{ $customer->username }}`)
+                                                    .then(response => response.json())
+                                                    .then(data => {
+                                                        if (data.success) {
+                                                            const sessionData = data.data;
+                                                            const tbody = document.getElementById('activeSessionData');
+                                                            tbody.innerHTML = `
+                    <tr>
+                        <td>${sessionData.username}</td>
+                        <td>${formatBytes(sessionData.acctinputoctets)}</td>
+                        <td>${formatBytes(sessionData.acctoutputoctets)}</td>
+                        <td>${new Date(sessionData.acctstarttime).toLocaleString()}</td>
+                        <td>${formatDuration(sessionData.acctsessiontime)}</td>
+                        <td>${sessionData.framedipaddress}</td>
+                        <td>${sessionData.nasipaddress}</td>
+                    </tr>
+                `;
+                                                        } else {
+                                                            console.error('Failed to fetch active session data:', data.message);
+                                                        }
+                                                    })
+                                                    .catch(error => console.error('Error:', error));
+                                            }
+
+                                            function formatBytes(bytes) {
+                                                if (bytes === 0) return '0 Bytes';
+                                                const k = 1024;
+                                                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+                                                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                                                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+                                            }
+
+                                            function formatDuration(seconds) {
+                                                const hours = Math.floor(seconds / 3600);
+                                                const minutes = Math.floor((seconds % 3600) / 60);
+                                                const remainingSeconds = seconds % 60;
+                                                return `${hours}h ${minutes}m ${remainingSeconds}s`;
+                                            }
+
+                                            // Call the function when the page loads
+                                            document.addEventListener('DOMContentLoaded', fetchActiveSession);
+                                        </script>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3" style="width: 100%; height: 25vh;">
+                                        <canvas id="bandwidthChart" style="width: 100%; height: 100%;"></canvas>
+                                        <div id="bandwidthValues" style="text-align: center; margin-top: 10px;"></div>
+                                    </div>
+
+                                </div>
+                            </div>
+
                         </div>
+                        {{-- END OF BANDWIDTH CHART AND STATISTICS --}}
                     </div>
                 </div>
             </div>
@@ -489,3 +565,4 @@
         });
     }
 </script>
+@vite('resources/js/bandwidth-ajax.js')

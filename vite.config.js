@@ -25,6 +25,7 @@ export default defineConfig({
                 'resources/js/soft-ui-dashboard.js',
                 'resources/js/soft-ui-dashboard.js.map',
                 'resources/js/soft-ui-dashboard.min.js',
+                'resources/js/bandwidth-ajax.js',
                 
             ],
             refresh: true,
