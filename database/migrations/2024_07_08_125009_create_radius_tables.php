@@ -116,10 +116,14 @@ class CreateRadiusTables extends Migration
         });
 
         Schema::create('radpostauth', function (Blueprint $table) {
-            $table->string('nasipaddress', 15)->primary();
-            $table->dateTime('reloadtime');
+            $table->integer('id')->primary();
+            $table->string('username', 64)->default('');
+            $table->string('pass', 64)->default('');
+            $table->string('reply', 32)->default('');
+            $table->timestamp('authdate', 6)->useCurrent()->useCurrentOnUpdate();
+            $table->string('class', 64)->nullable();
         });
-
+        
         // Create services table
         // Schema::create('services', function (Blueprint $table) {
         //     $table->id();

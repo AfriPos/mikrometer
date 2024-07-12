@@ -84,13 +84,11 @@
         $('.data-table1').each(function() {
             new DataTable(this, {
                 layout: {
-
                     stateSave: true,
-                    pageLength: 100
+                    pageLength: 10
                 }
             });
         });
-        
         // initialize DataTable2
         $('.data-table2').each(function() {
             var dataTable = new DataTable(this, {
@@ -122,7 +120,7 @@
                 },
                 dom: '<"row"<"col-md-6"B><"col-md-6"f>><"row"<"col-md-12"tr>><"row"<"col-md-6"i><"col-md-6 d-flex justify-content-end"p>>',
                 stateSave: true,
-                pageLength: 1000,
+                pageLength: 100,
                 responsive: true, // Enable responsive extension
                 scrollX: true, // Enable horizontal scrolling
                 initComplete: function() {
