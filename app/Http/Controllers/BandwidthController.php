@@ -49,30 +49,38 @@ class BandwidthController extends Controller
             ]);
         }
     }
-    public function fetchaActiveSession(Request $request, $customerId){
-            try {
-                $userData = radacct::where('username', $customerId)
-                    ->whereNull('acctstoptime')
-                    ->orderBy('acctstarttime', 'desc')
-                    ->first();
+    public function fetchActiveSession($clientId)
+    {
+        try {
+            $activeSession = radacct::where('username', $clientId)
+                ->whereNull('acctstoptime')
+                ->latest('acctstarttime')
+                ->first();
 
-                if ($userData) {
-                    return response()->json([
-                        'success' => true,
-                        'data' => $userData
-                    ]);
-                } else {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'No data found for the given username.'
-                    ]);
-                }
-            } catch (\Exception $e) {
+            if ($activeSession) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [
+                        'session_id' => $activeSession->radacctid,
+                        'start_time' => $activeSession->acctstarttime,
+                        'session_time' => $activeSession->acctsessiontime,
+                        'input_octets' => $activeSession->acctinputoctets,
+                        'output_octets' => $activeSession->acctoutputoctets,
+                    ],
+                ]);
+            } else {
                 return response()->json([
                     'success' => false,
-                    'message' => 'An error occurred while fetching user data: ' . $e->getMessage()
+                    'message' => 'No active session found for the client.',
                 ]);
             }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch active session. ' . $e->getMessage(),
+            ]);
         }
+    }
+
 
     }

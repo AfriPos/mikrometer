@@ -345,7 +345,8 @@
                                         </button>
                                         <ul class="dropdown-menu">
                                             <li><a class="dropdown-item" href="javascript:;">One time invoice</a></li>
-                                            <li><a class="dropdown-item" href="javascript:;">Recurring invoice</a></li>
+                                            <li><a class="dropdown-item" href="javascript:;">Recurring invoice</a>
+                                            </li>
                                             <li><a class="dropdown-item" href="javascript:;">Credit note</a></li>
                                             <li><a class="dropdown-item" href="javascript:;" data-bs-toggle="modal"
                                                     data-bs-target="#createpayment">Payments</a></li>
@@ -358,25 +359,30 @@
                                 <!-- Payments include -->
                                 @include('finance.index')
                             </div>
-                              {{-- BANDWIDTH CHART AND STATISTICS --}}
-                        <div id="statistics" class="tab-content" style="display: none;">
+                            {{-- BANDWIDTH CHART AND STATISTICS --}}
+                            <div id="statistics" class="tab-content" style="display: none;">
 
-                            <div class="card">
-                                <div class="card-header">Bandwidth Usage</div>
-                                <div class="card-body">
-                              
-                                </div>
-                                <div class="card-body">
-                                    <div class="mb-3" style="width: 100%; height: 25vh;">
-                                        <canvas id="bandwidthChart" style="width: 100%; height: 100%;"></canvas>
-                                        <div id="bandwidthValues" style="text-align: center; margin-top: 10px;"></div>
+                                <div class="card">
+                                    <div class="card-header">Bandwidth Usage</div>
+                                    <div class="card-body">
+                                        <div class="card-header">Active Session</div>
+                                        <div id="activeSessionInfo">
+                                            <!-- Active session information will be displayed here -->
+                                        </div>
                                     </div>
+                                    <div class="card-body">
+                                        <div class="card-header">Bandwidth Usage</div>
+                                        <div class="mb-3" style="width: 100%; height: 25vh;">
+                                            <canvas id="bandwidthChart" style="width: 100%; height: 100%;"></canvas>
+                                            <div id="bandwidthValues" style="text-align: center; margin-top: 10px;">
+                                            </div>
+                                        </div>
 
+                                    </div>
                                 </div>
-                            </div>
 
-                        </div>
-                        {{-- END OF BANDWIDTH CHART AND STATISTICS --}}
+                            </div>
+                            {{-- END OF BANDWIDTH CHART AND STATISTICS --}}
                         </div>
                     </div>
                 </div>
@@ -536,63 +542,92 @@
 </script>
 
 <script>
-    const customerId = {{ $customer->id }}; 
-const ctx = document.getElementById('bandwidthChart').getContext('2d');
-const bandwidthChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        datasets: [{
-            label: 'Upload',
-            borderColor: 'rgba(75, 192, 192, 1)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            fill: true,
-            data: []
-        }, {
-            label: 'Download',
-            borderColor: 'rgba(153, 102, 255, 1)',
-            backgroundColor: 'rgba(153, 102, 255, 0.2)',
-            fill: true,
-            data: []
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-            x: {
-                type: 'realtime',
-                realtime: {
-                    delay: 2000,
-                    refresh: 1000,
-                    onRefresh: function(chart) {
-                        fetch(`/admin/customer/${customerId}/bandwidth`)
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    const timestamp = Math.floor(Date.now() / 1000) * 1000;
-                                    chart.data.datasets[0].data.push({
-                                        x: timestamp,
-                                        y: parseFloat(data.tx_bits_per_second)
-                                    });
-                                    chart.data.datasets[1].data.push({
-                                        x: timestamp,
-                                        y: parseFloat(data.rx_bits_per_second)
-                                    });
-                                    chart.update();
-                                }
-                            });
+    const customerId = {{ $customer->id }};
+    const ctx = document.getElementById('bandwidthChart').getContext('2d');
+    const bandwidthChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: [{
+                label: 'Upload',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                fill: true,
+                data: []
+            }, {
+                label: 'Download',
+                borderColor: 'rgba(153, 102, 255, 1)',
+                backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                fill: true,
+                data: []
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    type: 'realtime',
+                    realtime: {
+                        delay: 2000,
+                        refresh: 1000,
+                        onRefresh: function(chart) {
+                            fetch(`/admin/customer/${customerId}/bandwidth`)
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        const timestamp = Math.floor(Date.now() / 1000) * 1000;
+                                        chart.data.datasets[0].data.push({
+                                            x: timestamp,
+                                            y: parseFloat(data.tx_bits_per_second)
+                                        });
+                                        chart.data.datasets[1].data.push({
+                                            x: timestamp,
+                                            y: parseFloat(data.rx_bits_per_second)
+                                        });
+                                        chart.update();
+                                    }
+                                });
+                        }
+                    },
+                    time: {
+                        displayFormats: {
+                            hour: 'HH:mm'
+                        }
                     }
                 },
-                time: {
-                    displayFormats: {
-                        hour: 'HH:mm'
-                    }
+                y: {
+                    beginAtZero: true
                 }
-            },
-            y: {
-                beginAtZero: true
             }
         }
+    });
+</script>
+<script>
+    function fetchActiveSession() {
+        fetch(`/bandwidth/active-session/{{ $customer->id }}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const sessionInfo = data.data;
+                    const activeSessionInfo = document.getElementById('activeSessionInfo');
+                    activeSessionInfo.innerHTML = `
+                  <p><strong>Session ID:</strong> ${sessionInfo.session_id}</p>
+                  <p><strong>Start Time:</strong> ${sessionInfo.start_time}</p>
+                  <p><strong>Session Time:</strong> ${sessionInfo.session_time} seconds</p>
+                  <p><strong>Input Octets:</strong> ${sessionInfo.input_octets}</p>
+                  <p><strong>Output Octets:</strong> ${sessionInfo.output_octets}</p>
+              `;
+                } else {
+                    document.getElementById('activeSessionInfo').innerHTML = `<p>${data.message}</p>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('activeSessionInfo').innerHTML =
+                    '<p>Error fetching active session information.</p>';
+            });
     }
-});
+
+    // Call the function when the page loads
+    document.addEventListener('DOMContentLoaded', fetchActiveSession);
 </script>
