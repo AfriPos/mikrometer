@@ -46,9 +46,8 @@ class CustomerController extends Controller
 
             // Validate the incoming request data
             $validatedData = $request->validate([
-                'portal_login' => 'required|string|max:255',
+                'portal_login' => 'nullable|string|max:255',
                 'portal_password' => 'nullable|string|max:255',
-                'status' => 'required|in:new,active,blocked,inactive',
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:customers,email,',
                 'phone' => 'required|string|max:20',

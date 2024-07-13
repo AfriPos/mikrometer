@@ -360,27 +360,14 @@
                                 @include('finance.index')
                             </div>
                             {{-- BANDWIDTH CHART AND STATISTICS --}}
-                            <div id="statistics" class="tab-content" style="display: none;">
-
+                            <div id="statistics" class="tab-content statistics" style="display: none;">
                                 <div class="card">
                                     <div class="card-header">Bandwidth Usage</div>
                                     <div class="card-body">
-                                        <div class="card-header">Active Session</div>
-                                        <div id="activeSessionInfo">
-                                            <!-- Active session information will be displayed here -->
-                                        </div>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="card-header">Bandwidth Usage</div>
-                                        <div class="mb-3" style="width: 100%; height: 25vh;">
-                                            <canvas id="bandwidthChart" style="width: 100%; height: 100%;"></canvas>
-                                            <div id="bandwidthValues" style="text-align: center; margin-top: 10px;">
-                                            </div>
-                                        </div>
-
+                                        <button id="refreshButton" onclick="refreshRealtimeChart()">Refresh</button>
+                                        <canvas id="bandwidthChart" width="400" height="200"></canvas>
                                     </div>
                                 </div>
-
                             </div>
                             {{-- END OF BANDWIDTH CHART AND STATISTICS --}}
                         </div>
@@ -418,8 +405,17 @@
 
         // Save the active tab ID in local storage
         localStorage.setItem('activeTab', tabId);
-    }
 
+        if (tabId === 'statistics') {
+            // setupRealtimeChart();
+            refreshRealtimeChart()
+        } else {
+            // Close existing SSE connection if open
+            if (eventSource) {
+                eventSource.close();
+            }
+        }
+    }
 
     document.addEventListener('DOMContentLoaded', (event) => {
         // Retrieve the active tab ID from local storage
@@ -448,8 +444,170 @@
                     tabContents[i].style.display = "none"; // Hide the tab content
                 }
             }
+
+            // Check if active tab is statistics
+            if (activeTab === 'statistics') {
+                setupRealtimeChart();
+            } else {
+                // Close existing SSE connection if open
+                if (eventSource) {
+                    eventSource.close();
+                }
+            }
         }
     });
+
+    let eventSource = null;
+    let rxData = [];
+    let txData = [];
+
+    const config = {
+        type: 'line',
+        data: {
+            datasets: [{
+                label: 'Download',
+                backgroundColor: 'rgba(82, 175, 238, 0.5)',
+                borderColor: 'rgb(82, 175, 238)',
+                data: rxData,
+                fill: true,
+                tension: 0.4
+            }, {
+                label: 'Upload',
+                backgroundColor: 'rgba(255, 121, 149, 0.5)',
+                borderColor: 'rgb(255, 121, 149)',
+                data: txData,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                },
+                streaming: {
+                    duration: 60000, // Display data within 1 minute window
+                    refresh: 1000, // Refresh chart every 1 second
+                    delay: 2000, // Delay in milliseconds before data updates
+                    frameRate: 30, // Number of frames per second
+                    pause: false, // Do not pause chart updates
+                    ttl: undefined, // Data point lifespan (null means always show)
+                }
+            },
+            scales: {
+                x: {
+                    type: 'realtime', // Use 'realtime' for x-axis
+                    time: {
+                        unit: 'second', // Display time in seconds
+                        displayFormats: {
+                            second: 'HH:mm:ss'
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Rate (bps)'
+                    },
+                    ticks: {
+                        // Format y-axis labels dynamically
+                        callback: function(value, index, values) {
+                            if (value >= 1e9) {
+                                return (value / 1e9) + ' Gbps';
+                            } else if (value >= 1e6) {
+                                return (value / 1e6) + ' Mbps';
+                            } else if (value >= 1e3) {
+                                return (value / 1e3) + ' Kbps';
+                            } else {
+                                return value + ' bps';
+                            }
+                        }
+                    }
+                }
+            },
+            animation: {
+                duration: 0 // Disable animations for smoother updates
+            }
+        }
+    };
+
+    // Create a new Chart instance
+    const ctx = document.getElementById('bandwidthChart').getContext('2d');
+    const bandwidthChart = new Chart(ctx, config);
+
+    // Function to setup SSE connection and handle reconnections
+    function setupRealtimeChart() {
+        // Close existing SSE connection if open
+        if (eventSource) {
+            eventSource.close();
+        }
+
+        // Initialize SSE connection
+        eventSource = new EventSource('/sse');
+
+        // SSE error handling and reconnect logic
+        eventSource.onerror = function(error) {
+            // Set the display of the statistics div to none
+            document.getElementById('statistics').style.display = 'none';
+            // Attempt to reconnect after 3 seconds
+            setTimeout(() => {
+                setupRealtimeChart(); // Re-establish SSE connection
+            }, 3000);
+        };
+
+        // EventSource event handler for receiving data
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+
+            // Add new data point
+            const newTime = new Date().getTime(); // Use milliseconds for timestamp
+
+            // Push new data to the datasets
+            rxData.push({
+                x: newTime,
+                y: data.rxRate
+            });
+            txData.push({
+                x: newTime,
+                y: data.txRate
+            });
+
+            // Limit the data arrays to show only data within the last minute
+            const cutoff = newTime - 60000; // One minute ago in milliseconds
+            removeOldData(rxData, cutoff);
+            removeOldData(txData, cutoff);
+
+            // Update the chart
+            bandwidthChart.update('none'); // Use 'none' to skip animation
+        };
+
+        // Function to remove old data from arrays
+        function removeOldData(dataArray, cutoff) {
+            while (dataArray.length > 0 && dataArray[0].x < cutoff) {
+                dataArray.shift();
+            }
+        }
+    }
+
+    // Refresh button click event listener
+    function refreshRealtimeChart(){
+        // Clear existing data arrays
+        rxData = [];
+        txData = [];
+
+        // Clear existing chart data
+        bandwidthChart.data.datasets[0].data = rxData;
+        bandwidthChart.data.datasets[1].data = txData;
+
+        // Update the chart
+        bandwidthChart.update('none'); // Use 'none' to skip animation
+
+        // Re-setup SSE connection
+        setupRealtimeChart();
+    }
 
 
     // fetch the subscription data
@@ -539,95 +697,4 @@
             targetInput.value = password;
         }
     }
-</script>
-
-<script>
-    const customerId = {{ $customer->id }};
-    const ctx = document.getElementById('bandwidthChart').getContext('2d');
-    const bandwidthChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            datasets: [{
-                label: 'Upload',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                fill: true,
-                data: []
-            }, {
-                label: 'Download',
-                borderColor: 'rgba(153, 102, 255, 1)',
-                backgroundColor: 'rgba(153, 102, 255, 0.2)',
-                fill: true,
-                data: []
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: {
-                    type: 'realtime',
-                    realtime: {
-                        delay: 2000,
-                        refresh: 1000,
-                        onRefresh: function(chart) {
-                            fetch(`/admin/customer/${customerId}/bandwidth`)
-                                .then(response => response.json())
-                                .then(data => {
-                                    if (data.success) {
-                                        const timestamp = Math.floor(Date.now() / 1000) * 1000;
-                                        chart.data.datasets[0].data.push({
-                                            x: timestamp,
-                                            y: parseFloat(data.tx_bits_per_second)
-                                        });
-                                        chart.data.datasets[1].data.push({
-                                            x: timestamp,
-                                            y: parseFloat(data.rx_bits_per_second)
-                                        });
-                                        chart.update();
-                                    }
-                                });
-                        }
-                    },
-                    time: {
-                        displayFormats: {
-                            hour: 'HH:mm'
-                        }
-                    }
-                },
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
-    });
-</script>
-<script>
-    function fetchActiveSession() {
-        fetch(`/bandwidth/active-session/{{ $customer->id }}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const sessionInfo = data.data;
-                    const activeSessionInfo = document.getElementById('activeSessionInfo');
-                    activeSessionInfo.innerHTML = `
-                  <p><strong>Session ID:</strong> ${sessionInfo.session_id}</p>
-                  <p><strong>Start Time:</strong> ${sessionInfo.start_time}</p>
-                  <p><strong>Session Time:</strong> ${sessionInfo.session_time} seconds</p>
-                  <p><strong>Input Octets:</strong> ${sessionInfo.input_octets}</p>
-                  <p><strong>Output Octets:</strong> ${sessionInfo.output_octets}</p>
-              `;
-                } else {
-                    document.getElementById('activeSessionInfo').innerHTML = `<p>${data.message}</p>`;
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('activeSessionInfo').innerHTML =
-                    '<p>Error fetching active session information.</p>';
-            });
-    }
-
-    // Call the function when the page loads
-    document.addEventListener('DOMContentLoaded', fetchActiveSession);
 </script>
