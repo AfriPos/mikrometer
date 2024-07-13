@@ -77,8 +77,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/dispatch', [PaymentController::class, 'dispatch'])->name('payment.dispatch');
 
     // Bandwidth
-    Route::get('/admin/customer/{id}/bandwidth', [BandwidthController::class, 'fetchBandwidth']);
-    Route::get('/admin/customer/{id}/active-session', [BandwidthController::class, 'fetchaActiveSession'])->name('customer.active-session');
+    // Route::get('/admin/customer/{id}/bandwidth', [BandwidthController::class, 'fetchBandwidth']);
+    // Route::get('/admin/customer/{id}/active-session', [BandwidthController::class, 'fetchaActiveSession'])->name('customer.active-session');
+    Route::get('/sse', 'App\Http\Controllers\SSEController@stream');
 
 
 
