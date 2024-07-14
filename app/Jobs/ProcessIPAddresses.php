@@ -31,8 +31,8 @@ class ProcessIPAddresses implements ShouldQueue
     private function generateAndInsertIPAddresses($network, $poolId)
     {
         list($subnet, $mask) = explode('/', $network);
-        $start = ip2long($subnet);
-        $end = $start + pow(2, (32 - $mask)) - 1;
+        $start = ip2long($subnet) + 1; // Exclude the first IP
+        $end = $start + pow(2, (32 - $mask)) - 3; // Exclude the last IP
 
         $batchSize = 1000; // Process 1000 IPs at a time
         $data = [];

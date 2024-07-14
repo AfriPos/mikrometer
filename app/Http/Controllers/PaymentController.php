@@ -21,7 +21,7 @@ class PaymentController extends Controller
     public function index()
     {
         $payments = paymentModel::all();
-        return view('payment.index', compact('payments'));
+        return view('finance.payments.index', compact('payments'));
     }
 
     public function create()

@@ -362,10 +362,33 @@
                             {{-- BANDWIDTH CHART AND STATISTICS --}}
                             <div id="statistics" class="tab-content statistics" style="display: none;">
                                 <div class="card">
-                                    <div class="card-header">Bandwidth Usage</div>
+                                    <div id="activeSessionContainer">
+                                        <!-- Active session data will be loaded here -->
+                                    </div>
+
+                                    <div class="flex justify-content-between">
+                                        <div class="card-header">Live Bandwidth Usage</div>
+                                        <div>
+                                            <div class="d-flex justify-content-between">
+                                                <select id="subscription" class="form-select me-2" aria-label="Select subscription">
+                                                    @foreach ($subscriptions as $subscription)
+                                                        <option value="{{ $subscription->id }}" {{ $loop->first ? 'selected' : '' }}>
+                                                            {{ $subscription->service }} #{{ $subscription->id }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+
+                                                <select id="timeFrameSelect" class="form-select">
+                                                    <option value="60000">Last 1 Minute</option>
+                                                    <option value="300000">Last 5 Minutes</option>
+                                                    <option value="600000">Last 10 Minutes</option>
+                                                </select>
+                                            </div>                                        </div>
+                                    </div>
+
                                     <div class="card-body">
                                         <button id="refreshButton" onclick="refreshRealtimeChart()">Refresh</button>
-                                        <canvas id="bandwidthChart" width="400" height="200"></canvas>
+                                        <canvas id="bandwidthChart" width="400" height="80"></canvas>
                                     </div>
                                 </div>
                             </div>
@@ -382,7 +405,6 @@
 @include('subscription.create')
 <!-- payment create modal include -->
 @include('finance.payments.create')
-
 <script>
     function changeActive(element, tabId) {
         // Remove active class from all nav links
@@ -407,7 +429,7 @@
         localStorage.setItem('activeTab', tabId);
 
         if (tabId === 'statistics') {
-            // setupRealtimeChart();
+            loadActiveSessions();
             refreshRealtimeChart()
         } else {
             // Close existing SSE connection if open
@@ -448,6 +470,7 @@
             // Check if active tab is statistics
             if (activeTab === 'statistics') {
                 setupRealtimeChart();
+                loadActiveSessions();
             } else {
                 // Close existing SSE connection if open
                 if (eventSource) {
@@ -457,24 +480,43 @@
         }
     });
 
+
     let eventSource = null;
     let rxData = [];
     let txData = [];
+    let streamingDuration = 60000; // Default streaming duration is 1 minute
+    const subscriptionSelect = document.getElementById('subscription');
+    let subscriptionId = subscriptionSelect.value;
+    subscriptionSelect.addEventListener('change', function() {
+        subscriptionId = this.value;
+        // Clear existing data arrays
+        rxData = [];
+        txData = [];
 
+        // Clear existing chart data
+        bandwidthChart.data.datasets[0].data = rxData;
+        bandwidthChart.data.datasets[1].data = txData;
+
+        // Update the chart
+        bandwidthChart.update('none'); // Use 'none' to skip animation
+
+        // Re-setup SSE connection
+        setupRealtimeChart();
+    });
     const config = {
         type: 'line',
         data: {
             datasets: [{
-                label: 'Download',
-                backgroundColor: 'rgba(82, 175, 238, 0.5)',
-                borderColor: 'rgb(82, 175, 238)',
+                label: 'Upload',
+                backgroundColor: 'rgba(255, 121, 149, 0.5)',
+                borderColor: 'rgb(255, 121, 149)',
                 data: rxData,
                 fill: true,
                 tension: 0.4
             }, {
-                label: 'Upload',
-                backgroundColor: 'rgba(255, 121, 149, 0.5)',
-                borderColor: 'rgb(255, 121, 149)',
+                label: 'Download',
+                backgroundColor: 'rgba(82, 175, 238, 0.5)',
+                borderColor: 'rgb(82, 175, 238)',
                 data: txData,
                 fill: true,
                 tension: 0.4
@@ -488,7 +530,7 @@
                     position: 'top',
                 },
                 streaming: {
-                    duration: 60000, // Display data within 1 minute window
+                    duration: streamingDuration, // Display data within selected time frame
                     refresh: 1000, // Refresh chart every 1 second
                     delay: 2000, // Delay in milliseconds before data updates
                     frameRate: 30, // Number of frames per second
@@ -503,18 +545,29 @@
                         unit: 'second', // Display time in seconds
                         displayFormats: {
                             second: 'HH:mm:ss'
-                        }
+                        },
+                        tooltipFormat: 'HH:mm:ss' // Format for tooltips
+                    },
+                    ticks: {
+                        major: {
+                            enabled: true,
+                            fontStyle: 'bold'
+                        },
+                        autoSkip: true,
+                        maxTicksLimit: 10,
+                        // Rotate labels at 45 degrees angle
+                        maxRotation: 45,
+                        minRotation: 45
                     }
                 },
                 y: {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Rate (bps)'
                     },
                     ticks: {
                         // Format y-axis labels dynamically
-                        callback: function(value, index, values) {
+                        callback: function(value) {
                             if (value >= 1e9) {
                                 return (value / 1e9) + ' Gbps';
                             } else if (value >= 1e6) {
@@ -546,12 +599,12 @@
         }
 
         // Initialize SSE connection
-        eventSource = new EventSource('/sse');
+        // eventSource = new EventSource('/sse');
+        eventSource = new EventSource(`/sse?subscription_id=${subscriptionId}`);
 
         // SSE error handling and reconnect logic
         eventSource.onerror = function(error) {
-            // Set the display of the statistics div to none
-            document.getElementById('statistics').style.display = 'none';
+            console.error('SSE Error:', error);
             // Attempt to reconnect after 3 seconds
             setTimeout(() => {
                 setupRealtimeChart(); // Re-establish SSE connection
@@ -575,8 +628,8 @@
                 y: data.txRate
             });
 
-            // Limit the data arrays to show only data within the last minute
-            const cutoff = newTime - 60000; // One minute ago in milliseconds
+            // Limit the data arrays to show only data within the selected time frame
+            const cutoff = newTime - streamingDuration; // Calculate cutoff based on selected duration
             removeOldData(rxData, cutoff);
             removeOldData(txData, cutoff);
 
@@ -593,7 +646,7 @@
     }
 
     // Refresh button click event listener
-    function refreshRealtimeChart(){
+    function refreshRealtimeChart() {
         // Clear existing data arrays
         rxData = [];
         txData = [];
@@ -609,6 +662,123 @@
         setupRealtimeChart();
     }
 
+    // Stop SSE and clear data on page refresh or unload
+    window.addEventListener('beforeunload', function() {
+        if (eventSource) {
+            eventSource.close();
+        }
+        rxData = [];
+        txData = [];
+        bandwidthChart.data.datasets[0].data = rxData;
+        bandwidthChart.data.datasets[1].data = txData;
+        bandwidthChart.update('none');
+    });
+
+    // Setup SSE and start streaming with default time frame
+    setupRealtimeChart();
+
+    // Event listener for time frame selection change
+    document.getElementById('timeFrameSelect').addEventListener('change', function() {
+        // Update streaming duration based on selected option
+        streamingDuration = parseInt(this.value);
+
+        // Update streaming duration in chart options
+        bandwidthChart.options.plugins.streaming.duration = streamingDuration;
+
+        // Re-setup SSE connection with updated streaming duration
+        setupRealtimeChart();
+    });
+
+    // Finding active sessions
+    function loadActiveSessions() {
+        fetch('/admin/active-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    customer_id: '{{ $customer->id }}'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('activeSessionContainer');
+                if (data.success) {
+                    const sessions = data.active_sessions;
+                    const formatBytes = (bytes) => {
+                        if (bytes === 0) return '0 B';
+                        const k = 1024;
+                        const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+                        const i = Math.floor(Math.log(bytes) / Math.log(k));
+                        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+                    };
+                    const secondsToHHMMSS = (seconds) => {
+                        return new Date(seconds * 1000).toISOString().substr(11, 8);
+                    };
+                    let html = `
+                    <div class="card mb-3">
+                        <div class="card-header">Active Sessions</div>
+                        <div class="card-body">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <th>Login</th>
+                                    <th>In</th>
+                                    <th>Out</th>
+                                    <th>Start at</th>
+                                    <th>Duration</th>
+                                    <th>IP</th>
+                                    <th>NAS</th>
+                                </thead>
+                                <tbody>`;
+                    
+                    sessions.forEach(session => {
+                        html += `
+                            <tr>
+                                <td>${session.username}</td>
+                                <td>${session.acctinputoctets ? formatBytes(session.acctinputoctets) : '0 B'}</td>
+                                <td>${session.acctoutputoctets ? formatBytes(session.acctoutputoctets) : '0 B'}</td>
+                                <td>${session.acctstarttime}</td>
+                                <td>${session.acctsessiontime ? secondsToHHMMSS(session.acctsessiontime) : '00:00:00'}</td>
+                                <td>${session.framedipaddress}</td>
+                                <td>${session.nasipaddress}</td>
+                            </tr>`;
+                    });
+                    
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>`;
+                    
+                    container.innerHTML = html;
+                } 
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('activeSessionsContainer').innerHTML =
+                    '<p>Error loading active sessions data.</p>';
+            });
+    }
+
+    // Generate an 8 character password
+    function generatePassword(button) {
+        var length = 8;
+        var charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var password = "";
+        for (var i = 0, n = charset.length; i < length; ++i) {
+            password += charset.charAt(Math.floor(Math.random() * n));
+        }
+
+        // Get the id of the target input field from the button's data-target attribute
+        var targetInputId = button.getAttribute('data-target');
+        var targetInput = document.getElementById(targetInputId);
+
+        // Set the generated password to the target input field
+        if (targetInput) {
+            targetInput.value = password;
+        }
+    }
 
     // fetch the subscription data
     function fetchSubscription(subscriptionid) {
@@ -678,23 +848,5 @@
             }
         });
     }
-
-    // Generate an 8 character password
-    function generatePassword(button) {
-        var length = 8;
-        var charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        var password = "";
-        for (var i = 0, n = charset.length; i < length; ++i) {
-            password += charset.charAt(Math.floor(Math.random() * n));
-        }
-
-        // Get the id of the target input field from the button's data-target attribute
-        var targetInputId = button.getAttribute('data-target');
-        var targetInput = document.getElementById(targetInputId);
-
-        // Set the generated password to the target input field
-        if (targetInput) {
-            targetInput.value = password;
-        }
-    }
 </script>
+{{-- END ACTIVE SESSION SCRIPT --}}

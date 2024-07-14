@@ -19,6 +19,18 @@ class RouterCredential extends Model
         'secret',
         'username',
         'password',
-        'description'
+        'description',
+        'ip_pool',
+        'configured',
     ];
+
+    /**
+     * Mark the router as configured.
+     *
+     * @return void
+     */
+    public function markAsConfigured()
+    {
+        $this->update(['configured' => true]); // Set 'configured' to true in the database
+    }
 }

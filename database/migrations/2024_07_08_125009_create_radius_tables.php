@@ -63,36 +63,35 @@ class CreateRadiusTables extends Migration
 
         // Create radacct table
         Schema::create('radacct', function (Blueprint $table) {
-
             $table->bigIncrements('radacctid');
-            $table->string('nasipaddress', 15);
-            $table->string('acctsessionid', 64)->index();
-            $table->string('acctuniqueid', 32)->unique();
-            $table->string('username', 64);
+            $table->string('acctsessionid', 64)->default('')->index();
+            $table->string('acctuniqueid', 32)->default('')->unique();
+            $table->string('username', 64)->default('')->index();
             $table->string('realm', 64)->nullable();
-            $table->string('nasportid', 15);
-            $table->string('nasporttype', 15);
-            $table->datetime('acctstarttime')->nullable();
+            $table->string('nasipaddress', 15)->default('')->index();
+            $table->string('nasportid', 32)->nullable();
+            $table->string('nasporttype', 32)->nullable();
+            $table->datetime('acctstarttime')->nullable()->index();
             $table->datetime('acctupdatetime')->nullable();
-            $table->datetime('acctstoptime')->nullable();
-            $table->integer('acctinterval')->nullable();
-            $table->integer('acctsessiontime')->nullable();
-            $table->integer('acctauthentic')->nullable();
-            $table->string('connect_info_start', 128)->nullable();
-            $table->string('connect_info_stop', 128)->nullable();
+            $table->datetime('acctstoptime')->nullable()->index();
+            $table->integer('acctinterval')->nullable()->index();
+            $table->unsignedInteger('acctsessiontime')->nullable()->index();
+            $table->string('acctauthentic', 32)->nullable();
+            $table->string('connectinfo_start', 128)->nullable();
+            $table->string('connectinfo_stop', 128)->nullable();
             $table->bigInteger('acctinputoctets')->nullable();
             $table->bigInteger('acctoutputoctets')->nullable();
-            $table->string('calledstationid', 50);
-            $table->string('callingstationid', 50);
-            $table->string('acctterminatecause', 32)->nullable();
+            $table->string('calledstationid', 50)->default('');
+            $table->string('callingstationid', 50)->default('');
+            $table->string('acctterminatecause', 32)->default('');
             $table->string('servicetype', 32)->nullable();
             $table->string('framedprotocol', 32)->nullable();
-            $table->string('framedipaddress', 45)->nullable()->index();
-            $table->string('framedipv6address', 45)->nullable()->index();
-            $table->string('framedipv6prefix', 45)->nullable()->index();
-            $table->string('framedinterfaceid', 44)->nullable()->index();
-            $table->string('delegatedipv6prefix', 45)->nullable()->index();
-            $table->string('class', 64)->nullable()->nullable()->index();
+            $table->string('framedipaddress', 15)->default('')->index();
+            $table->string('framedipv6address', 45)->default('')->index();
+            $table->string('framedipv6prefix', 45)->default('')->index();
+            $table->string('framedinterfaceid', 44)->default('')->index();
+            $table->string('delegatedipv6prefix', 45)->default('')->index();
+            $table->string('class', 64)->nullable()->index();
         });
 
         Schema::create('nas', function (Blueprint $table) {
@@ -108,6 +107,8 @@ class CreateRadiusTables extends Migration
             $table->string('password', 191)->nullable();
             $table->string('community', 50)->nullable();
             $table->string('description', 200)->nullable()->default('RADIUS CLIENT');
+            $table->string('ip_pool')->nullable();
+            $table->boolean('configured')->nullable()->default(false);
         });
 
         Schema::create('nasreload', function (Blueprint $table) {
@@ -116,14 +117,14 @@ class CreateRadiusTables extends Migration
         });
 
         Schema::create('radpostauth', function (Blueprint $table) {
-            $table->integer('id')->primary();
+            $table->increments('id');
             $table->string('username', 64)->default('');
             $table->string('pass', 64)->default('');
             $table->string('reply', 32)->default('');
             $table->timestamp('authdate', 6)->useCurrent()->useCurrentOnUpdate();
             $table->string('class', 64)->nullable();
         });
-        
+
         // Create services table
         // Schema::create('services', function (Blueprint $table) {
         //     $table->id();

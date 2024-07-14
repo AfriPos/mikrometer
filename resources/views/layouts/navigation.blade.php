@@ -32,7 +32,7 @@
                         class=" icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="fa-solid fa-house"></i>
                     </div>
-                    <span class="nav-link-text ms-1">Customer List</span>
+                    <span class="nav-link-text ms-1">Customers</span>
                 </a>
             </li>
             <li class="nav-item mt-3">
@@ -45,15 +45,15 @@
                         class=" icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="fa-solid fa-house"></i>
                     </div>
-                    <span class="nav-link-text ms-1">Payment List</span>
+                    <span class="nav-link-text ms-1">Payments</span>
                 </a>
             </li>
             <li class="nav-item mt-3">
                 <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Network</h6>
             </li>
             <li class="nav-item">
-                <a class="nav-link {{ Route::currentRouteName() == 'router.create' ? 'active' : '' }}"
-                    href="{{ route('router.create') }}">
+                <a class="nav-link {{ Route::currentRouteName() == 'router.index' ? 'active' : '' }}"
+                    href="{{ route('router.index') }}">
                     <div
                         class=" icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
                         <i class="fa-solid fa-house"></i>
@@ -84,6 +84,19 @@
                     <span class="nav-link-text ms-1">PPPoe</span>
                 </a>
             </li>
+            {{-- <li class="nav-item mt-3">
+                <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">System</h6>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ Route::currentRouteName() == 'admin.show' ? 'active' : '' }}"
+                    href="{{ route('admin.show') }}">
+                    <div
+                        class=" icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fa-solid fa-house"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Administration</span>
+                </a>
+            </li> --}}
         </ul>
 
     </div>

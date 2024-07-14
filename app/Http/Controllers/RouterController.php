@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\MyHelper\RouterosAPI;
 use App\Http\Controllers\api\RouterosController;
 use App\Models\PoolModel;
+use App\Models\radacct;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -72,6 +73,11 @@ class RouterController extends Controller
     public function index()
     {
         $routers = RouterCredential::all();
+        foreach ($routers as $router) {
+            $router->clients_count = radacct::where('nasipaddress', $router->nasname)
+                ->whereNull('acctstoptime')
+                ->count();
+        }
         return view('nas.index', compact('routers'));
     }
 
@@ -102,9 +108,9 @@ class RouterController extends Controller
                 'community' => 'nullable|string|max:255',
                 'description' => 'nullable|string|max:255',
                 'username' => 'nullable|string|max:255',
-                'password' => 'nullable|string|min:6|max:255',
+                'password' => 'nullable|string|max:255',
                 'radius_server_ip' => 'required|string|max:255',
-                'secret' => 'required|string|min:6|max:255'
+                'secret' => 'nullable|string|min:6|max:255'
             ]);
 
             // Generate a 13-character secret with a balanced mix of small letters and numbers
@@ -188,122 +194,142 @@ class RouterController extends Controller
      */
     public function update(Request $request, RouterCredential $nas)
     {
-        // $ip = '192.168.100.249';
-        // $pingResult = exec("ping -c 1 $ip", $output, $status);
+        try {
+            // Implement database transaction
+            DB::beginTransaction();
 
-        // if ($status == 0) {
-        //     return response()->json(['status' => 'reachable']);
-        // } else {
-        //     return response()->json(['status' => 'unreachable']);
-        // }
+            // Define validation rules
+            $rules = [
+                'nasname' => 'required|string|max:255',
+                'shortname' => 'required|string|max:64',
+                'type' => 'nullable|string|in:other,cisco,computone,livingston,max40xx,multitech,netserver,pathras,patton,portslave,tc,usrhiper,vasexpressaccess',
+                'ports' => 'nullable|integer|min:0',
+                'server' => 'nullable|string|max:255',
+                'community' => 'nullable|string|max:255',
+                'description' => 'nullable|string|max:255',
+                'username' => 'nullable|string|max:255',
+                'password' => 'nullable|string|max:255', // Password is nullable
+                'radius_server_ip' => 'required|string|max:255',
+                'secret' => 'nullable|string|max:255',
+                'ip_pool' => 'nullable|string',
+            ];
 
-        $ping = $this->ping($nas->nasname, $latency = 0);
-        if ($ping['status']) {
+            // Validate the request data
+            $validator = Validator::make($request->all(), $rules);
 
-            // Create an instance of the RouterosAPI class
-            $api = new RouterosAPI();
-            // fetch router login credentials
-            // $nas = RouterCredential::where('ip_address', $request->ip_address)->first();
+            // // Check validation fails
+            // if ($validator->fails()) {
+            //     return redirect()->back()->with($validator)->withInput();
+            // }
 
-            // Connect to the RouterOS
-            try {
+            // Get validated data
+            $validatedData = $validator->validated();
 
-                if ($api->connect($request->nasname, $nas->username, $nas->password)) {
-                    echo "Connected to RouterOS device.\n";
-
-                    // Set up RADIUS server
-                    // Replace these details with the actual RADIUS server configuration you need
-                    $networkIP = $this->getNetworkIp($request->pool);
-                    echo $networkIP;
-
-                    $radius_server = $api->comm('/radius/add', array(
-                        'address' => $nas->radius_server_ip,
-                        'secret' => $nas->secret,
-                        'service' => 'hotspot,ppp',
-                        'timeout' => '300ms'
-                    ));
-
-                    // Create the PPP profile with additional parameters
-                    $pppoe_profile = $api->comm('/ppp/profile/add', [
-                        'name' => 'MIKROMETER_RADIUS_PROFILE',
-                        'local-address' => $networkIP,
-                    ]);
-                    // Create the PPPoE server interface
-                    $pppoe_server = $api->comm('/interface/pppoe-server/server/add', [
-                        'service-name' => 'MIKROMETER_RADIUS_SERVER',
-                        'max-mtu' => '1480',
-                        'max-mru' => '1480',
-                        'authentication' => 'pap,chap,mschap1,mschap2',
-                        'default-profile' => 'MIKROMETER_RADIUS_PROFILE',
-                        'disabled' => 'no',
-                    ]);
-
-                    // Define an array of firewall rules
-                    $firewall_rules = array(
-                        array(
-                            'chain' => 'forward',
-                            'src-address-list' => 'MM-allowed-list',
-                            'action' => 'accept',
-                            'comment' => 'Allow traffic from MM-allowed-list'
-                        ),
-                        array(
-                            'chain' => 'forward',
-                            'src-address-list' => 'MM-blocked-list',
-                            'action' => 'drop',
-                            'comment' => 'Drop traffic from MM-blocked-list-'
-                        )
-                    );
-
-                    // Iterate over the array of firewall rules and add each one
-                    foreach ($firewall_rules as $rule) {
-                        $response = $api->comm('/ip/firewall/filter/add', $rule);
-                    }
-
-                    // Disconnect from the router
-                    $api->disconnect();
-                } else {
-                    DB::rollBack();
-                    return redirect()->back()->with('error', 'Failed to connect to the router!');
-                }
-            } catch (\Throwable $e) {
-                DB::rollBack();
-                dd($e);
-                // return response()->json(['error' => 'Failed to create PPPoE service!', $e->getMessage()], 500);
+            // Conditionally unset 'password' field if empty or not provided
+            if (!isset($validatedData['password']) || empty($validatedData['password'])) {
+                unset($validatedData['password']);
             }
-        } else {
-            echo "Offline with ";
+
+            // Perform RouterOS configuration setup
+            $ping = $this->ping($request->nasname, $latency = 0);
+            if ($ping) {
+
+                // Create an instance of the RouterosAPI class
+                $api = new RouterosAPI();
+
+                try {
+                    // Connect to the RouterOS
+                    if ($api->connect($request->nasname ?? $nas->nasname, $request->username ?? $nas->username, $request->password ?? $nas->password)) {                            // Set up RADIUS server
+                        $networkIP = $this->getNetworkIp($request->ip_pool);
+                        // Check if RADIUS server exists
+                        $existing_radius = $api->comm('/radius/print', ['?address' => $nas->radius_server_ip]);
+                        if (empty($existing_radius)) {
+                            $radius_server = $api->comm('/radius/add', [
+                                'address' => $nas->radius_server_ip,
+                                'secret' => $nas->secret,
+                                'service' => 'hotspot,ppp',
+                                'timeout' => '300ms'
+                            ]);
+                        }
+
+                        // Check if PPP profile exists
+                        $existing_ppp_profile = $api->comm('/ppp/profile/print', ['?name' => 'MIKROMETER_RADIUS_PROFILE']);
+                        if (empty($existing_ppp_profile)) {
+                            $pppoe_profile = $api->comm('/ppp/profile/add', [
+                                'name' => 'MIKROMETER_RADIUS_PROFILE',
+                                'local-address' => $networkIP,
+                            ]);
+                        }
+
+                        // Check if PPPoE server interface exists
+                        $existing_pppoe_server = $api->comm('/interface/pppoe-server/server/print', ['?service-name' => 'MIKROMETER_RADIUS_SERVER']);
+                        if (empty($existing_pppoe_server)) {
+                            $pppoe_server = $api->comm('/interface/pppoe-server/server/add', [
+                                'service-name' => 'MIKROMETER_RADIUS_SERVER',
+                                'max-mtu' => '1480',
+                                'max-mru' => '1480',
+                                'authentication' => 'pap,chap,mschap1,mschap2',
+                                'default-profile' => 'MIKROMETER_RADIUS_PROFILE',
+                                'disabled' => 'no',
+                            ]);
+                        }
+
+                        // Define an array of firewall rules
+                        $firewall_rules = [
+                            [
+                                'chain' => 'forward',
+                                'src-address-list' => 'MM-allowed-list',
+                                'action' => 'accept',
+                                'comment' => 'Allow traffic from MM-allowed-list'
+                            ],
+                            [
+                                'chain' => 'forward',
+                                'src-address-list' => 'MM-blocked-list',
+                                'action' => 'drop',
+                                'comment' => 'Drop traffic from MM-blocked-list'
+                            ]
+                        ];
+                        // Check if firewall rules exist
+                        foreach ($firewall_rules as $rule) {
+                            $existing_rule = $api->comm('/ip/firewall/filter/print', [
+                                '?chain' => $rule['chain'],
+                                '?src-address-list' => $rule['src-address-list'],
+                                '?action' => $rule['action']
+                            ]);
+                            if (empty($existing_rule)) {
+                                $api->comm('/ip/firewall/filter/add', $rule);
+                            }
+                        }
+
+                        // Disconnect from the router
+                        $api->disconnect();
+
+                        // Mark the NAS as configured
+                        $nas->markAsConfigured();
+                    } else {
+                        DB::rollBack();
+                        return redirect()->back()->with('error', 'Failed to connect to the router!');
+                    }
+                } catch (\Throwable $e) {
+                    DB::rollBack();
+                    dd($e);
+                    return redirect()->back()->with('error', 'Failed to configure RouterOS: ' . $e->getMessage());
+                }
+            }
+
+            // Update model with validated data
+            $nas->fill($validatedData);
+            $nas->save();
+
+            // Commit transaction
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Router updated successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            // dd($e);
+            return redirect()->back()->with('error', 'Failed to update Router record: ' . $e->getMessage());
         }
-
-
-        // try {
-        //     // Validate the incoming request data
-        //     $validatedData = $request->validate([
-        //         'nasname' => 'required|string|max:255',
-        //         'shortname' => 'required|string|max:64',
-        //         'type' => 'nullable|string|in:other,cisco,computone,livingston,max40xx,multitech,netserver,pathras,patton,portslave,tc,usrhiper,vasexpressaccess',
-        //         'ports' => 'nullable|integer|min:0',
-        //         'server' => 'nullable|string|max:255',
-        //         'community' => 'nullable|string|max:255',
-        //         'description' => 'nullable|string|max:255',
-        //         'username' => 'nullable|string|max:255',
-        //         'password' => 'nullable|string|min:6|max:255',
-        //         'radius_server_ip' => 'required|string|max:255',
-        //         'secret' => 'required|string|min:6|max:255'
-        //     ]);
-
-        //     // Implement database transaction
-        //     DB::beginTransaction();
-        //     // Update the NAS record
-        //     $nas->update($validatedData);
-
-        //     DB::commit();
-        // } catch (\Exception $e) {
-        //     DB::rollBack();
-        //     // return response()->json(['error' => 'Failed to update NAS record']);
-        //     dd($e);
-        // }
-
-
     }
 
     /**
@@ -311,7 +337,26 @@ class RouterController extends Controller
      */
     public function destroy(RouterCredential $nas)
     {
-        //
+        // dd($nas);
+        try {
+            $nas->delete();
+            return redirect()->back()->with('success', 'Router deleted successfully.');
+        } catch (\Exception $e) {
+            dd($e);
+            return redirect()->back()->with('error', 'Failed to delete router.');
+        }
+    }
+
+    public function pingInitialize(Request $request)
+    {
+        $ip = $request->input('ip');
+        $latency = $this->ping($ip);
+
+        if ($latency) {
+            return response()->json(['status' => true, 'latency' => $latency]);
+        } else {
+            return response()->json(['status' => false]);
+        }
     }
 
     // ping an ip you provide
@@ -329,7 +374,7 @@ class RouterController extends Controller
                     break;
                 }
             }
-            return ['status' => true, 'latency' => $latency];
+            return $latency;
         } else {
             return  false;
         }
