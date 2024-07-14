@@ -54,18 +54,17 @@
                             <div class="form-floating mb-3">
                                 <input type="text" class="form-control" id="nasname" name="nasname"
                                     placeholder="" required>
-                                <label for="nasname">NAS Address</label>
+                                <label for="nasname">Router's IP</label>
+                            </div>
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="radius_server_ip" name="radius_server_ip"
+                                    placeholder="" required>
+                                <label for="radius_server_ip">Radius Server IP</label>
                             </div>
                             <div class="form-floating mb-3">
                                 <input type="text" class="form-control" id="shortname" name="shortname" placeholder=""
                                     required>
                                 <label for="shortname">Name</label>
-                            </div>
-
-                            <div class="form-floating mb-3">
-                                <input type="password" class="form-control" id="password" name="password"
-                                    placeholder="" required>
-                                <label for="password">Password</label>
                             </div>
                             <div class="form-floating mb-3">
                                 <textarea class="form-control" id="description" name="description" placeholder="" rows="3"></textarea>

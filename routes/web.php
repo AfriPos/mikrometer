@@ -30,12 +30,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/pool', [PoolController::class, 'store'])->name('pool.store');
 
     // Router
-    Route::get('/admin/router', [RouterController::class, 'index'])->name('router.index');
+    Route::get('/admin/routers', [RouterController::class, 'index'])->name('router.index');
     Route::get('/admin/router/create', [RouterController::class, 'create'])->name('router.create');
     Route::post('/admin/router', [RouterController::class, 'store'])->name('router.store');
     Route::get('/admin/router/{nas}/edit', [RouterController::class, 'edit'])->name('router.edit');
     Route::put('/admin/router/{nas}', [RouterController::class, 'update'])->name('router.update');
-    Route::delete('/admin/router/{id}', [RouterController::class, 'destroy'])->name('router.destroy');
+    Route::delete('/admin/router/{nas}', [RouterController::class, 'destroy'])->name('router.destroy');
     Route::post('/fetch-interfaces', [RouterController::class, 'fetchInterfaces'])->name('fetch.interfaces');
 
     // PPPoE Service Routes
@@ -49,7 +49,7 @@ Route::middleware('auth')->group(function () {
 
 
     // Customers
-    Route::get('/admin/customer', [CustomerController::class, 'index'])->name('customer.index');
+    Route::get('/admin/customers', [CustomerController::class, 'index'])->name('customer.index');
     Route::get('admin/customer/create', [CustomerController::class, 'create'])->name('customer.create');
     Route::post('admin/customer', [CustomerController::class, 'store'])->name('customer.store');
     Route::get('admin/customer/{customer}/edit', [CustomerController::class, 'edit'])->name('customer.edit');
@@ -69,7 +69,7 @@ Route::middleware('auth')->group(function () {
 
 
     // Payment
-    Route::get('/admin/payment', [PaymentController::class, 'index'])->name('payment.index');
+    Route::get('/admin/payments', [PaymentController::class, 'index'])->name('payment.index');
     Route::get('/admin/payment/create', [PaymentController::class, 'create'])->name('payment.create');
     Route::post('/admin/payment/{customer}', [PaymentController::class, 'store'])->name('payment.store');
     Route::get('/admin/payment/{payment}/edit', [PaymentController::class, 'edit'])->name('payment.edit');
@@ -80,7 +80,14 @@ Route::middleware('auth')->group(function () {
     // Route::get('/admin/customer/{id}/bandwidth', [BandwidthController::class, 'fetchBandwidth']);
     //Route::get('/admin/customer/1000/active-session', [radacctController::class, 'show'])->name('customer.active-session');
     Route::get('/sse', 'App\Http\Controllers\SSEController@stream');
+    Route::get('/ping', 'App\Http\Controllers\RouterController@pingInitialize');
+
+    
     Route::post('/admin/active-session', [radacctController::class, 'show'])->name('radacct.show');
+
+
+
+
 
 
 });

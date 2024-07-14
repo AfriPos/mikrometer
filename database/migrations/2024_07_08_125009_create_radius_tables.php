@@ -63,7 +63,7 @@ class CreateRadiusTables extends Migration
 
         // Create radacct table
         Schema::create('radacct', function (Blueprint $table) {
-            $table->bigInteger('radacctid')->primary();
+            $table->bigIncrements('radacctid');
             $table->string('acctsessionid', 64)->default('')->index();
             $table->string('acctuniqueid', 32)->default('')->unique();
             $table->string('username', 64)->default('')->index();
@@ -107,6 +107,8 @@ class CreateRadiusTables extends Migration
             $table->string('password', 191)->nullable();
             $table->string('community', 50)->nullable();
             $table->string('description', 200)->nullable()->default('RADIUS CLIENT');
+            $table->string('ip_pool')->nullable();
+            $table->boolean('configured')->nullable()->default(false);
         });
 
         Schema::create('nasreload', function (Blueprint $table) {
@@ -115,14 +117,14 @@ class CreateRadiusTables extends Migration
         });
 
         Schema::create('radpostauth', function (Blueprint $table) {
-            $table->integer('id')->primary();
+            $table->increments('id');
             $table->string('username', 64)->default('');
             $table->string('pass', 64)->default('');
             $table->string('reply', 32)->default('');
             $table->timestamp('authdate', 6)->useCurrent()->useCurrentOnUpdate();
             $table->string('class', 64)->nullable();
         });
-        
+
         // Create services table
         // Schema::create('services', function (Blueprint $table) {
         //     $table->id();

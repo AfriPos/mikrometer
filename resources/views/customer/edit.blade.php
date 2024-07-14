@@ -408,6 +408,30 @@
                                             </div>                                        </div>
                                     </div>
 
+                                    <div id="activeSessionContainer">
+                                        <!-- Active session data will be loaded here -->
+                                    </div>
+
+                                    <div class="flex justify-content-between">
+                                        <div class="card-header">Live Bandwidth Usage</div>
+                                        <div>
+                                            <div class="d-flex justify-content-between">
+                                                <select id="subscription" class="form-select me-2" aria-label="Select subscription">
+                                                    @foreach ($subscriptions as $subscription)
+                                                        <option value="{{ $subscription->id }}" {{ $loop->first ? 'selected' : '' }}>
+                                                            {{ $subscription->service }} #{{ $subscription->id }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+
+                                                <select id="timeFrameSelect" class="form-select">
+                                                    <option value="60000">Last 1 Minute</option>
+                                                    <option value="300000">Last 5 Minutes</option>
+                                                    <option value="600000">Last 10 Minutes</option>
+                                                </select>
+                                            </div>                                        </div>
+                                    </div>
+
                                     <div class="card-body">
                                         <button id="refreshButton" onclick="refreshRealtimeChart()">Refresh</button>
                                         <canvas id="bandwidthChart" width="400" height="80"></canvas>
@@ -451,7 +475,7 @@
         localStorage.setItem('activeTab', tabId);
 
         if (tabId === 'statistics') {
-            // setupRealtimeChart();
+            loadActiveSessions();
             refreshRealtimeChart()
             loadActiveSessions();
         } else {
@@ -493,6 +517,7 @@
             // Check if active tab is statistics
             if (activeTab === 'statistics') {
                 setupRealtimeChart();
+                loadActiveSessions();
             } else {
                 // Close existing SSE connection if open
                 if (eventSource) {
@@ -503,9 +528,29 @@
     });
 
 
+
     let eventSource = null;
     let rxData = [];
     let txData = [];
+    let streamingDuration = 60000; // Default streaming duration is 1 minute
+    const subscriptionSelect = document.getElementById('subscription');
+    let subscriptionId = subscriptionSelect.value;
+    subscriptionSelect.addEventListener('change', function() {
+        subscriptionId = this.value;
+        // Clear existing data arrays
+        rxData = [];
+        txData = [];
+
+        // Clear existing chart data
+        bandwidthChart.data.datasets[0].data = rxData;
+        bandwidthChart.data.datasets[1].data = txData;
+
+        // Update the chart
+        bandwidthChart.update('none'); // Use 'none' to skip animation
+
+        // Re-setup SSE connection
+        setupRealtimeChart();
+    });
     let streamingDuration = 60000; // Default streaming duration is 1 minute
     const subscriptionSelect = document.getElementById('subscription');
     let subscriptionId = subscriptionSelect.value;
@@ -532,10 +577,16 @@
                 label: 'Upload',
                 backgroundColor: 'rgba(255, 121, 149, 0.5)',
                 borderColor: 'rgb(255, 121, 149)',
+                label: 'Upload',
+                backgroundColor: 'rgba(255, 121, 149, 0.5)',
+                borderColor: 'rgb(255, 121, 149)',
                 data: rxData,
                 fill: true,
                 tension: 0.4
             }, {
+                label: 'Download',
+                backgroundColor: 'rgba(82, 175, 238, 0.5)',
+                borderColor: 'rgb(82, 175, 238)',
                 label: 'Download',
                 backgroundColor: 'rgba(82, 175, 238, 0.5)',
                 borderColor: 'rgb(82, 175, 238)',
@@ -552,6 +603,7 @@
                     position: 'top',
                 },
                 streaming: {
+                    duration: streamingDuration, // Display data within selected time frame
                     duration: streamingDuration, // Display data within selected time frame
                     refresh: 1000, // Refresh chart every 1 second
                     delay: 2000, // Delay in milliseconds before data updates
@@ -580,6 +632,19 @@
                         // Rotate labels at 45 degrees angle
                         maxRotation: 45,
                         minRotation: 45
+                        },
+                        tooltipFormat: 'HH:mm:ss' // Format for tooltips
+                    },
+                    ticks: {
+                        major: {
+                            enabled: true,
+                            fontStyle: 'bold'
+                        },
+                        autoSkip: true,
+                        maxTicksLimit: 10,
+                        // Rotate labels at 45 degrees angle
+                        maxRotation: 45,
+                        minRotation: 45
                     }
                 },
                 y: {
@@ -589,6 +654,7 @@
                     },
                     ticks: {
                         // Format y-axis labels dynamically
+                        callback: function(value) {
                         callback: function(value) {
                             if (value >= 1e9) {
                                 return (value / 1e9) + ' Gbps';
@@ -623,9 +689,12 @@
         // Initialize SSE connection
         // eventSource = new EventSource('/sse');
         eventSource = new EventSource(`/sse?subscription_id=${subscriptionId}`);
+        // eventSource = new EventSource('/sse');
+        eventSource = new EventSource(`/sse?subscription_id=${subscriptionId}`);
 
         // SSE error handling and reconnect logic
         eventSource.onerror = function(error) {
+            console.error('SSE Error:', error);
             console.error('SSE Error:', error);
             // Attempt to reconnect after 3 seconds
             setTimeout(() => {
@@ -652,6 +721,8 @@
 
             // Limit the data arrays to show only data within the selected time frame
             const cutoff = newTime - streamingDuration; // Calculate cutoff based on selected duration
+            // Limit the data arrays to show only data within the selected time frame
+            const cutoff = newTime - streamingDuration; // Calculate cutoff based on selected duration
             removeOldData(rxData, cutoff);
             removeOldData(txData, cutoff);
 
@@ -668,6 +739,7 @@
     }
 
     // Refresh button click event listener
+    function refreshRealtimeChart() {
     function refreshRealtimeChart() {
         // Clear existing data arrays
         rxData = [];
@@ -873,4 +945,5 @@
         });
     }
 </script>
+{{-- END ACTIVE SESSION SCRIPT --}}
 {{-- END ACTIVE SESSION SCRIPT --}}
