@@ -106,6 +106,18 @@
                                                     Price</label>
                                             </div>
                                             <div class="form-floating mb-3 d-flex">
+                                                <select class="form-select" name="nas_id" id="router">
+                                                    <option value="" disabled selected>Select Router</option>
+                                                    @foreach ($routers as $router)
+                                                        <option value="{{ $router->id }}"
+                                                            {{ $router->id == $subscription->nas_id ? 'selected' : '' }}>
+                                                            {{ $router->shortname }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                <label for="router">Router</label>
+                                            </div>
+                                            <div class="form-floating mb-3 d-flex">
                                                 <input type="text" id="pppoe_login" name="pppoe_login"
                                                     class="form-control" value={{ $subscription->pppoe_login }}
                                                     placeholder="">

@@ -9,7 +9,7 @@ use App\Http\Controllers\PPPoEServiceController;
 use App\Http\Controllers\RouterController;
 use App\Http\Controllers\CustomerSubscriptionController;
 use App\Http\Controllers\PaymentController;
-
+use App\Http\Controllers\radacctController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -78,9 +78,9 @@ Route::middleware('auth')->group(function () {
 
     // Bandwidth
     // Route::get('/admin/customer/{id}/bandwidth', [BandwidthController::class, 'fetchBandwidth']);
-    // Route::get('/admin/customer/{id}/active-session', [BandwidthController::class, 'fetchaActiveSession'])->name('customer.active-session');
+    //Route::get('/admin/customer/1000/active-session', [radacctController::class, 'show'])->name('customer.active-session');
     Route::get('/sse', 'App\Http\Controllers\SSEController@stream');
-
+    Route::post('/admin/active-session', [radacctController::class, 'show'])->name('radacct.show');
 
 
 });

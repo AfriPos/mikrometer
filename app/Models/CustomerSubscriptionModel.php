@@ -19,6 +19,7 @@ class CustomerSubscriptionModel extends Model
         'status',
         'service_price',
         'ipaddress',
+        'nas_id',
     ];
 
     public function pppoeservice()
@@ -29,5 +30,9 @@ class CustomerSubscriptionModel extends Model
     public function customer()
     {
         return $this->belongsTo(CustomerModel::class);
+    }
+    public function router()
+    {
+        return $this->belongsTo(RouterCredential::class);
     }
 }

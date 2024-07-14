@@ -28,7 +28,8 @@ class CustomerSubscriptionController extends Controller
      */
     public function create()
     {
-        //
+
+        return view('customer.subscription.create', compact('routers'));
     }
 
     /**
@@ -47,6 +48,7 @@ class CustomerSubscriptionController extends Controller
                 'pppoe_login' => 'required|string|max:255',
                 'pppoe_password' => 'required|string|max:255',
                 'service_price' => 'required|integer',
+                'nas_id' => 'required|integer',
             ]);
 
             $this->allocateIpAddress($request->ipaddress, $customerId);
@@ -62,6 +64,7 @@ class CustomerSubscriptionController extends Controller
             $subscription->status = 'active';
             $subscription->ipaddress = $request->ipaddress;
             $subscription->customer_id = $customerId;
+            $subscription->nas_id = $request->nas_id;
             $subscription->save();
 
             $radreply = new radreply();
@@ -156,6 +159,7 @@ class CustomerSubscriptionController extends Controller
                 'pppoe_login' => 'required|string|max:255',
                 'pppoe_password' => 'required|string|max:255',
                 'service_price' => 'required|integer',
+                'nas_id' => 'required|integer',
             ]);
 
             // Release previously assigned IP address if new IP is different

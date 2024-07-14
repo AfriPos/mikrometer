@@ -12,6 +12,7 @@ use App\Models\PPPoEProfile;
 use App\Models\PPPoEService;
 use App\Models\radreply;
 use App\Models\radusergroup;
+use App\Models\RouterCredential;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -133,8 +134,9 @@ class CustomerController extends Controller
                 'ips' => $ipaddresses,
             ];
         }
+        $routers=RouterCredential::all();
 
-        return view('customer.edit', compact('customer', 'pppoeprofiles', 'subscriptions', 'ipaddress', 'ippools', 'poolsWithIps', 'invoices', 'payments'));
+        return view('customer.edit', compact('customer', 'pppoeprofiles', 'subscriptions', 'ipaddress', 'ippools', 'poolsWithIps', 'invoices', 'payments', 'routers'));
     }
 
     /**
