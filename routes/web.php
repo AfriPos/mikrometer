@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BandwidthController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -10,6 +11,8 @@ use App\Http\Controllers\RouterController;
 use App\Http\Controllers\CustomerSubscriptionController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\radacctController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\UserController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -47,7 +50,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('/admin/pppoe/{id}', [PPPoEServiceController::class, 'destroy'])->name('pppoe.destroy');
     Route::post('/fetch-service', [PPPoEServiceController::class, 'show'])->name('pppoe.show');
 
-
     // Customers
     Route::get('/admin/customers', [CustomerController::class, 'index'])->name('customer.index');
     Route::get('admin/customer/create', [CustomerController::class, 'create'])->name('customer.create');
@@ -65,9 +67,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('/admin/service/{subscriptionid}', [CustomerSubscriptionController::class, 'destroy'])->name('service.destroy');
     Route::post('/fetch-subscription', [CustomerSubscriptionController::class, 'show'])->name('service.show');
 
-
-
-
     // Payment
     Route::get('/admin/payments', [PaymentController::class, 'index'])->name('payment.index');
     Route::get('/admin/payment/create', [PaymentController::class, 'create'])->name('payment.create');
@@ -76,20 +75,29 @@ Route::middleware('auth')->group(function () {
     Route::put('/admin/payment/{payment}', [PaymentController::class, 'update'])->name('payment.update');
     Route::get('/admin/dispatch', [PaymentController::class, 'dispatch'])->name('payment.dispatch');
 
-    // Bandwidth
-    // Route::get('/admin/customer/{id}/bandwidth', [BandwidthController::class, 'fetchBandwidth']);
-    //Route::get('/admin/customer/1000/active-session', [radacctController::class, 'show'])->name('customer.active-session');
+    // others
     Route::get('/sse', 'App\Http\Controllers\SSEController@stream');
     Route::get('/ping', 'App\Http\Controllers\RouterController@pingInitialize');
 
-    
+    // Accounting
     Route::post('/admin/active-session', [radacctController::class, 'show'])->name('radacct.show');
 
+    // administration
+    Route::get('/admin/administration', [AdminController::class, 'show'])->name('admin.show');
 
+    // RoleController
+    Route::get('/admin/roles', [RoleController::class, 'index'])->name('roles.index')->middleware('permission:read roles');
+    Route::get('/admin/roles/{role}/editpermissions', [RoleController::class, 'editPermissions'])->name('roles.editpermissions')->middleware('permission:editpermissions roles');
+    Route::put('/admin/roles/{role}/editpermissions', [RoleController::class, 'givePermissionsToRole'])->name('roles.givePermissionsToRole')->middleware('permission:editpermissions roles');
 
-
-
-
+    // users
+    Route::get('/admin/users', [UserController::class, 'index'])->name('users.index');
+    Route::get('/admin/users/create', [UserController::class, 'create'])->name('users.create');
+    Route::post('/admin/users', [UserController::class, 'store'])->name('users.store');
+    Route::get('/admin/users/{user}', [UserController::class, 'show'])->name('users.show');
+    Route::get('/admin/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 });
 
 require __DIR__ . '/auth.php';
