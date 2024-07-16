@@ -7,6 +7,7 @@ use App\Models\RouterCredential;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\MyHelper\RouterosAPI;
+use Illuminate\Support\Facades\DB;
 
 class SSEController extends Controller
 {
@@ -69,4 +70,8 @@ class SSEController extends Controller
             return [];
         }
     }
+
 }
+
+
+
