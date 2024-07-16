@@ -25,8 +25,6 @@ return new class extends Migration
             $table->foreign('customer_id')->references('id')->on('customers');
             $table->integer('service_price');
             $table->foreign('service')->references('service_name')->on('pppoe_services');
-            $table->unsignedInteger('nas_id');
-            $table->foreign('nas_id')->references('id')->on('nas');
             $table->timestamps();
         });
     }

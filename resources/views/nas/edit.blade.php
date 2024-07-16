@@ -80,12 +80,30 @@
                                     <label for="username">Login (API)</label>
                                 </div>
 
-                                <div class="form-floating mb-3">
+                                <div class="form-floating mb-3 position-relative">
                                     <input type="password" class="form-control" id="password" name="password"
-                                        placeholder="" autocomplete="new-password">
+                                        placeholder="" value={{ $nas->password }} autocomplete="new-password">
                                     <label for="password">Password (API)</label>
+                                    <button type="button" class="btn btn-outline-secondary position-absolute end-0 top-50 translate-middle-y me-2" onclick="togglePasswordVisibility()">
+                                        <i class="bi bi-eye" id="togglePassword"></i>
+                                    </button>
                                 </div>
-
+                                <script>
+                                    function togglePasswordVisibility() {
+                                        const passwordInput = document.getElementById('password');
+                                        const toggleIcon = document.getElementById('togglePassword');
+                                        
+                                        if (passwordInput.type === 'password') {
+                                            passwordInput.type = 'text';
+                                            toggleIcon.classList.remove('bi-eye');
+                                            toggleIcon.classList.add('bi-eye-slash');
+                                        } else {
+                                            passwordInput.type = 'password';
+                                            toggleIcon.classList.remove('bi-eye-slash');
+                                            toggleIcon.classList.add('bi-eye');
+                                        }
+                                    }
+                                </script>
                                 <div class="form-floating mb-3">
                                     <textarea class="form-control" id="description" name="description" placeholder="" rows="3"> {{ $nas->description }} </textarea>
                                     <label for="description">Description</label>
@@ -116,6 +134,11 @@
                                         @endforeach
                                     </select>
                                 </div>
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" id="geo_data" name="geo_data"
+                                        placeholder="" value="{{ $nas->geo_data }}">
+                                    <label for="geo_data">Geo Data</label>
+                                </div>
 
                             </div>
                             <div class="mt-2 d-grid gap-2 col-6 mx-auto">
@@ -124,8 +147,27 @@
 
                             <div class="border row p-2 rounded-2 mt-2">
                                 <h5>Map</h5>
-
-
+                                <div id="router_map" style="height: 400px;"></div>
+                                <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+                                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        var geoData = document.getElementById('geo_data').value;
+                                        var coordinates = geoData.split(',');
+                                        var lat = parseFloat(coordinates[0]);
+                                        var lon = parseFloat(coordinates[1]);
+                                        
+                                        var map = L.map('router_map').setView([lat, lon], 13);
+                                        
+                                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                        }).addTo(map);
+                                        
+                                        L.marker([lat, lon]).addTo(map)
+                                            .bindPopup('{{ $nas->shortname }}')
+                                            .openPopup();
+                                    });
+                                </script>
                             </div>
                         </form>
                     </div>

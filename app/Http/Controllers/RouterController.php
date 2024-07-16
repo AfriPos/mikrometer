@@ -129,6 +129,9 @@ class RouterController extends Controller
             $nas = RouterCredential::create($validatedData);
 
             DB::commit();
+            // Call the restart server function
+            $this->reloadRadiusServer();
+
             return redirect()->route('router.edit', ['nas' => $nas->id])->with('success', 'Router has been successfully added!');
             //     $routeros_db = RouterCredential::where('ip_address', $req_data['ip_address'])->get();
 
@@ -212,6 +215,7 @@ class RouterController extends Controller
                 'radius_server_ip' => 'required|string|max:255',
                 'secret' => 'nullable|string|max:255',
                 'ip_pool' => 'nullable|string',
+                'geo_data' => 'nullable|string|max:255',
             ];
 
             // Validate the request data
@@ -323,7 +327,8 @@ class RouterController extends Controller
 
             // Commit transaction
             DB::commit();
-
+            // Call the restart server function
+            $this->reloadRadiusServer();
             return redirect()->back()->with('success', 'Router updated successfully');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -369,14 +374,14 @@ class RouterController extends Controller
                 if (strpos($line, 'time=') !== false) {
                     preg_match('/time[=<]\d+ms/', $line, $matches);
                     if (isset($matches[0])) {
-                        $latency = (int)filter_var($matches[0], FILTER_SANITIZE_NUMBER_INT);
+                        $latency = (int) filter_var($matches[0], FILTER_SANITIZE_NUMBER_INT);
                     }
                     break;
                 }
             }
             return $latency;
         } else {
-            return  false;
+            return false;
         }
     }
 
@@ -399,4 +404,21 @@ class RouterController extends Controller
 
         return $networkIp;
     }
+
+    // reload the radius server
+    public function reloadRadiusServer()
+    {
+        $command = "sudo systemctl restart freeradius";
+        $output = [];
+        $returnVar = 0;
+
+        exec($command, $output, $returnVar);
+
+        if ($returnVar === 0) {
+            return response()->json(['status' => true, 'message' => 'RADIUS server reloaded successfully']);
+        } else {
+            return response()->json(['status' => false, 'message' => 'Failed to reload RADIUS server', 'error' => implode("\n", $output)]);
+        }
+    }
+
 }

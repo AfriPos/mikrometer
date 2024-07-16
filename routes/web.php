@@ -10,6 +10,7 @@ use App\Http\Controllers\RouterController;
 use App\Http\Controllers\CustomerSubscriptionController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\radacctController;
+use App\Http\Controllers\routerSyncController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -80,10 +81,13 @@ Route::middleware('auth')->group(function () {
     // Route::get('/admin/customer/{id}/bandwidth', [BandwidthController::class, 'fetchBandwidth']);
     //Route::get('/admin/customer/1000/active-session', [radacctController::class, 'show'])->name('customer.active-session');
     Route::get('/sse', 'App\Http\Controllers\SSEController@stream');
-    Route::get('/ping', 'App\Http\Controllers\RouterController@pingInitialize');
-
-    
+    Route::get('/ping', 'App\Http\Controllers\RouterController@pingInitialize'); 
     Route::post('/admin/active-session', [radacctController::class, 'show'])->name('radacct.show');
+
+    // SYNC ROUTER
+    Route::post('/admin/router-sync/universal-coa', [routerSyncController::class, 'universalCoa'])->name('router.sync.universal-coa');
+
+
 
 
 

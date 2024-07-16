@@ -162,6 +162,8 @@ class CustomerSubscriptionController extends Controller
                 'nas_id' => 'required|integer',
             ]);
 
+            $changes = [];
+
             // Release previously assigned IP address if new IP is different
             if ($subscriptionid->ipaddress != $validatedData['ipaddress']) {
                 $this->releaseIpAddress($subscriptionid->username);
@@ -185,6 +187,8 @@ class CustomerSubscriptionController extends Controller
                         'value' => $validatedData['ipaddress']
                     ]);
                 }
+
+                $changes['ip_address'] = $validatedData['ipaddress'];
             }
 
             // Update the pppoe_password if new password is different
@@ -204,8 +208,9 @@ class CustomerSubscriptionController extends Controller
                         'value' => $validatedData['pppoe_password']
                     ]);
                 }
-            }
 
+                $changes['password'] = $validatedData['pppoe_password'];
+            }
 
             // Update the pppoe_login if new login is different
             if ($subscriptionid->pppoe_login != $validatedData['pppoe_login']) {
@@ -226,14 +231,42 @@ class CustomerSubscriptionController extends Controller
                         'username' => $validatedData['pppoe_login']
                     ]);
                 }
+
+                $changes['username'] = $validatedData['pppoe_login'];
             }
 
             // Update subscription details
             $subscriptionid->update($validatedData);
 
             DB::commit();
-            // dd($subscriptionid);
-            return redirect()->back()->with('success', 'Customer subscription updated successfully!');
+            
+                        // Check if the data in the DB is different from the data being updated
+                        $existingSubscription = CustomerSubscriptionModel::find($subscriptionid->id);
+                        $dataChanged = false;
+
+                        // Compare relevant fields
+                        if ($existingSubscription->pppoe_login != $validatedData['pppoe_login'] ||
+                            $existingSubscription->pppoe_password != $validatedData['pppoe_password'] ||
+                            $existingSubscription->service_id != $validatedData['service_id'] ||
+                            $existingSubscription->nas_id != $validatedData['nas_id']) {
+                            $dataChanged = true;
+                        }
+
+                        // Call the routerSyncController function only if data has changed
+                        if ($dataChanged) {
+                            $routerSyncController = new routerSyncController();
+                            $routerApi = new RouterosAPI();
+                            $routerCredentials = RouterCredential::where('id', $validatedData['nas_id'])->first();
+                            $routerIp = $routerCredentials->nasname;
+                            $routerUsername = $routerCredentials->username;
+                            $routerPassword = $routerCredentials->password;
+                            $username = $validatedData['pppoe_login'];
+                            $result = $routerSyncController->universalCoa($routerApi, $routerIp, $routerUsername, $routerPassword, $username);
+  
+                            if (!$result['success']) {
+                                throw new \Exception($result['message']);
+                            }
+                        }            return redirect()->back()->with('success', 'Customer subscription updated successfully!');
         } catch (\Throwable $th) {
             DB::rollBack();
             dd($th);
