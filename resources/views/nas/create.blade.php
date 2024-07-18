@@ -67,12 +67,22 @@
                                 <label for="shortname">Name</label>
                             </div>
                             <div class="form-floating mb-3">
+                                <select class="form-select" id="location" name="location" required>
+                                    <option value="" selected disabled>Select a location</option>
+                                    @foreach($locations as $location)
+                                        <option value="{{ $location->id }}">{{ $location->name }}</option>
+                                    @endforeach
+                                </select>
+                                <label for="location">Location</label>
+                            </div>
+
+                            <div class="form-floating mb-3">
                                 <textarea class="form-control" id="description" name="description" placeholder="" rows="3"></textarea>
                                 <label for="description">Description</label>
                             </div>
 
                             <div class="d-grid gap-2 col-6 mx-auto">
-                                <button type="submit" class="btn btn-primary">Add Router</button>
+                                <button type="submit" class="btn btn-primary">Save</button>
                             </div>
                         </form>
                     </div>

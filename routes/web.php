@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\BandwidthController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CustomerController;
@@ -9,6 +8,8 @@ use App\Http\Controllers\PoolController;
 use App\Http\Controllers\PPPoEServiceController;
 use App\Http\Controllers\RouterController;
 use App\Http\Controllers\CustomerSubscriptionController;
+use App\Http\Controllers\dashboardController;
+use App\Http\Controllers\locationsController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\radacctController;
 use App\Http\Controllers\RoleController;
@@ -16,14 +17,16 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\routerSyncController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('/admin/dashboard');
 });
 
-Route::get('/admin/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Route::get('/admin/dashboard', function () {
+//     return view('dashboard');
+// })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/admin/dashboard', [dashboardController::class, 'index'])->name('dashboard');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -78,6 +81,13 @@ Route::middleware('auth')->group(function () {
 
     // others
     Route::get('/sse', 'App\Http\Controllers\SSEController@stream');
+    Route::get('/ping', 'App\Http\Controllers\RouterController@pingInitialize');
+
+    // Accounting
+    Route::post('/admin/active-session', [radacctController::class, 'show'])->name('radacct.show');
+
+    // administration
+    Route::get('/admin/administration', [AdminController::class, 'show'])->name('admin.show');
     Route::get('/ping', 'App\Http\Controllers\RouterController@pingInitialize'); 
     Route::post('/admin/active-session', [radacctController::class, 'show'])->name('radacct.show');
 
@@ -100,6 +110,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
     Route::put('/admin/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::delete('/admin/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+    // Locations
+    Route::get('/admin/locations', [locationsController::class, 'index'])->name('locations.index');
+    Route::get('/admin/locations/create', [locationsController::class, 'create'])->name('locations.create');
+    Route::post('/admin/locations', [locationsController::class, 'store'])->name('locations.store');
+    Route::get('/admin/locations/{location}', [locationsController::class, 'show'])->name('locations.show');
+    Route::get('/admin/locations/{location}/edit', [locationsController::class, 'edit'])->name('locations.edit');
+    Route::put('/admin/locations/{location}', [locationsController::class, 'update'])->name('locations.update');
+    Route::delete('/admin/locations/{location}', [locationsController::class, 'destroy'])->name('locations.destroy');
+
 });
 
 require __DIR__ . '/auth.php';

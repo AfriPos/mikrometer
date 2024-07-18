@@ -84,7 +84,9 @@
                                     <input type="password" class="form-control" id="password" name="password"
                                         placeholder="" value={{ $nas->password }} autocomplete="new-password">
                                     <label for="password">Password (API)</label>
-                                    <button type="button" class="btn btn-outline-secondary position-absolute end-0 top-50 translate-middle-y me-2" onclick="togglePasswordVisibility()">
+                                    <button type="button"
+                                        class="btn btn-outline-secondary position-absolute end-0 top-50 translate-middle-y me-2"
+                                        onclick="togglePasswordVisibility()">
                                         <i class="bi bi-eye" id="togglePassword"></i>
                                     </button>
                                 </div>
@@ -92,7 +94,7 @@
                                     function togglePasswordVisibility() {
                                         const passwordInput = document.getElementById('password');
                                         const toggleIcon = document.getElementById('togglePassword');
-                                        
+
                                         if (passwordInput.type === 'password') {
                                             passwordInput.type = 'text';
                                             toggleIcon.classList.remove('bi-eye');
@@ -136,7 +138,8 @@
                                 </div>
                                 <div class="form-floating mb-3">
                                     <input type="text" class="form-control" id="geo_data" name="geo_data"
-                                        placeholder="" value="{{ $nas->geo_data }}">
+                                        placeholder=""
+                                        value="{{ $nas->location->latitude }}, {{ $nas->location->longitude }}">
                                     <label for="geo_data">Geo Data</label>
                                 </div>
 
@@ -156,13 +159,13 @@
                                         var coordinates = geoData.split(',');
                                         var lat = parseFloat(coordinates[0]);
                                         var lon = parseFloat(coordinates[1]);
-                                        
+
                                         var map = L.map('router_map').setView([lat, lon], 13);
-                                        
+
                                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                                             attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                                         }).addTo(map);
-                                        
+
                                         L.marker([lat, lon]).addTo(map)
                                             .bindPopup('{{ $nas->shortname }}')
                                             .openPopup();

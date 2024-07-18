@@ -109,6 +109,7 @@ class CreateRadiusTables extends Migration
             $table->string('description', 200)->nullable()->default('RADIUS CLIENT');
             $table->string('ip_pool')->nullable();
             $table->boolean('configured')->nullable()->default(false);
+            $table->unsignedBigInteger('locationid')->nullable();
         });
 
         Schema::create('nasreload', function (Blueprint $table) {

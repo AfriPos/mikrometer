@@ -17,7 +17,7 @@
                                 </a>
                             </div>
                             <div class="col-md-4">
-                                <a href="javascript:;" class="">
+                                <a href="{{ route('locations.index') }}" class="">
                                     <i class="fa-solid fa-map-location-dot pe-2"></i> Locations
                                 </a>
                             </div>

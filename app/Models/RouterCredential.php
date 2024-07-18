@@ -34,4 +34,8 @@ class RouterCredential extends Model
     {
         $this->update(['configured' => true]); // Set 'configured' to true in the database
     }
+
+    public function location(){
+        return $this->belongsTo(locationsModel::class, 'id');
+    }
 }

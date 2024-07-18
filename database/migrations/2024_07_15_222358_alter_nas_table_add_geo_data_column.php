@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('nas', function (Blueprint $table) {
-            $table->text('geo_data')->nullable()->after('configured');
+            $table->decimal('latitude', 10, 8)->nullable()->after('configured');
+            $table->decimal('longitude', 11, 8)->nullable()->after('latitude');
         });
     }
 

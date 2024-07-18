@@ -57,6 +57,17 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming"></script>
 
+
+    <style>
+        .hover-effect {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .hover-effect:hover {
+            transform: translateY(-10px);
+        }
+    </style>
+
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/custom.js', 'resources/css/nucleo-icons.css', 'resources/css/nucleo-svg.css', 'resources/css/soft-ui-dashboard.css', 'resources/css/soft-ui-dashboard.min.css', 'resources/js/bootstrap-notify.js', 'resources/js/bootstrap.js', 'resources/js/Chart.extension.js', 'resources/js/chartjs.min.js', 'resources/js/perfect-scrollbar.min.js', 'resources/js/resources/js/popper.min.js', 'resources/js/soft-ui-dashboard.js', 'resources/js/soft-ui-dashboard.min.js'])
 </head>

@@ -6,6 +6,7 @@ use App\Models\RouterCredential;
 use Illuminate\Http\Request;
 use App\MyHelper\RouterosAPI;
 use App\Http\Controllers\api\RouterosController;
+use App\Models\locationsModel;
 use App\Models\PoolModel;
 use App\Models\radacct;
 use Illuminate\Support\Facades\DB;
@@ -13,9 +14,6 @@ use Illuminate\Support\Facades\Validator;
 
 class RouterController extends Controller
 {
-
-
-
     public $API = [], $routeros_data = [], $connection;
 
 
@@ -66,7 +64,6 @@ class RouterController extends Controller
         }
     }
 
-
     /**
      * Display a listing of the resource.
      */
@@ -86,9 +83,9 @@ class RouterController extends Controller
      */
     public function create()
     {
-        return view('nas.create');
+        $locations = locationsModel::all();
+        return view('nas.create', compact('locations'));
     }
-
 
     /**
      * Store a newly created resource in storage.
