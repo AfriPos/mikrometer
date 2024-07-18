@@ -10,10 +10,20 @@
     </div>
     <hr class="horizontal dark mt-0">
 
-    <div class="navbar-collapse  w-auto " id="sidenav-collapse-main">
+    <div class="navbar-collapse  w-auto h-100" id="sidenav-collapse-main">
         <ul class="navbar-nav">
             <li class="nav-item mt-3">
                 <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">Customers</h6>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ Route::currentRouteName() == 'customer.create' ? 'active' : '' }}"
+                    href="{{ route('customer.create') }}">
+                    <div
+                        class=" icon-sm shadow border-radius-md bg-white text-center me-2 d-flex align-items-center justify-content-center">
+                        <i class="fa-solid fa-house"></i>
+                    </div>
+                    <span class="nav-link-text ms-1">Add Customer</span>
+                </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ Route::currentRouteName() == 'customer.create' ? 'active' : '' }}"
@@ -84,7 +94,7 @@
                     <span class="nav-link-text ms-1">PPPoe</span>
                 </a>
             </li>
-            {{-- <li class="nav-item mt-3">
+            <li class="nav-item mt-3">
                 <h6 class="ps-4 ms-2 text-uppercase text-xs font-weight-bolder opacity-6">System</h6>
             </li>
             <li class="nav-item">
@@ -96,8 +106,7 @@
                     </div>
                     <span class="nav-link-text ms-1">Administration</span>
                 </a>
-            </li> --}}
+            </li>
         </ul>
-
     </div>
 </aside>

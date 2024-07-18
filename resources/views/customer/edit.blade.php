@@ -1,7 +1,3 @@
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/moment"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming"></script>
 <x-app-layout>
     <div class="container-fluid p-4">
         <div class="row">

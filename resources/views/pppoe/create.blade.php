@@ -174,7 +174,7 @@
                             </div>
 
                             <div class="d-grid gap-2 col-6 mx-auto">
-                                <button type="submit" class="btn btn-primary">Create PPPoE Service</button>
+                                <button type="submit" class="btn btn-primary">Create</button>
                             </div>
                         </form>
                     </div>
