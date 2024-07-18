@@ -90,6 +90,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/administration', [AdminController::class, 'show'])->name('admin.show');
     Route::get('/ping', 'App\Http\Controllers\RouterController@pingInitialize'); 
     Route::post('/admin/active-session', [radacctController::class, 'show'])->name('radacct.show');
+    Route::get('/admin/data-totals/{username}/{startDate}/{endDate}', [radacctController::class, 'getDataTotals'])->name('radacct.getDataTotals');
+    Route::get('/admin/ended-sessions/{username}', [radacctController::class, 'showEndedSessions'])->name('radacct.ended-sessions');
+    Route::get('/bandwidth/average/{username}', [BandwidthController::class, 'getAverageBandwidth']);
+    Route::get('/bandwidth/daily', [BandwidthController::class, 'getTotalDailyBandwidth'])->name('bandwidth.total-daily');
 
     // SYNC ROUTER
     Route::post('/admin/router-sync/universal-coa', [routerSyncController::class, 'universalCoa'])->name('router.sync.universal-coa');

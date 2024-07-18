@@ -230,20 +230,21 @@
                                                     <h5>Map</h5>
                                                     <div id="map" style="height: 400px;"></div>
                                                     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-                                                    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+                                                    <link rel="stylesheet"
+                                                        href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
                                                     <script>
                                                         document.addEventListener('DOMContentLoaded', function() {
                                                             var geoData = document.getElementById('geo_data').value;
                                                             var coordinates = geoData.split(',');
                                                             var lat = parseFloat(coordinates[0]);
                                                             var lon = parseFloat(coordinates[1]);
-                                                            
+
                                                             var map = L.map('map').setView([lat, lon], 13);
-                                                            
+
                                                             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                                                                 attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                                                             }).addTo(map);
-                                                            
+
                                                             L.marker([lat, lon]).addTo(map)
                                                                 .bindPopup('{{ $customer->name }}')
                                                                 .openPopup();
@@ -380,6 +381,125 @@
                             {{-- BANDWIDTH CHART AND STATISTICS --}}
                             <div id="statistics" class="tab-content statistics" style="display: none;">
                                 <div class="card">
+                                    <div class="card-header">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>Internet</div>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3 d-flex align-items-center">
+                                                    <label for="serviceSelect" class="me-2 mb-0">Services:</label>
+                                                    <select id="serviceSelect" class="form-select"
+                                                        aria-label="Select service">
+                                                        @foreach ($subscriptions as $subscription)
+                                                            <option value="{{ $subscription->pppoe_login }}"
+                                                                {{ $loop->first ? 'selected' : '' }}>
+                                                                {{ $subscription->service }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="me-3 d-flex align-items-center">
+                                                    <label for="dateRangeSelect"
+                                                        class="me-2 mb-0"><b>Period:</b></label>
+                                                    <div class="input-group">
+                                                        <input type="text" id="dateRangeSelect"
+                                                            class="form-control" style="width: 250px;" readonly>
+                                                    </div>
+                                                </div>
+                                                <div class="me-3 d-flex align-items-center">
+                                                    <button id="refreshButton" class="btn btn-outline-secondary">
+                                                        <i class="fas fa-sync-alt"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <script>
+                                        $(function() {
+                                            var start = moment().startOf('month');
+                                            var end = moment().endOf('month');
+
+                                            function cb(start, end) {
+                                                $('#dateRangeSelect').val(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+                                            }
+
+                                            $('#dateRangeSelect').daterangepicker({
+                                                startDate: start,
+                                                endDate: end,
+                                                ranges: {
+                                                    'Today': [moment(), moment()],
+                                                    'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                                                    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                                                    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                                                    'This Month': [moment().startOf('month'), moment().endOf('month')],
+                                                    'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1,
+                                                        'month').endOf('month')]
+                                                }
+                                            }, cb);
+
+                                            cb(start, end);
+
+                                            // Add event listener for date range change
+                                            $('#dateRangeSelect').on('apply.daterangepicker', function(ev, picker) {
+                                                // Call your function to update data based on the selected date range
+                                                updateDataBasedOnDateRange(picker.startDate, picker.endDate);
+                                                loadEndedSessions(picker.startDate, picker.endDate);
+                                                updateDailyBandwidthChart(picker.startDate, picker.endDate);
+                                            });
+
+                                            // Add event listener for refresh button
+                                            $('#refreshButton').on('click', function() {
+                                                var picker = $('#dateRangeSelect').data('daterangepicker');
+                                                updateDataBasedOnDateRange(picker.startDate, picker.endDate);
+                                                loadEndedSessions(picker.startDate, picker.endDate);
+                                                updateDailyBandwidthChart(picker.startDate, picker.endDate);
+                                            });
+
+                                            // Call the main function on page load
+                                            updateDataBasedOnDateRange(start, end);
+                                            loadEndedSessions(start, end);
+                                            updateDailyBandwidthChart(start, end);
+                                        });
+
+                                        // Function to update data based on selected date range
+                                        function updateDataBasedOnDateRange(startDate, endDate) {
+                                            var selectedService = $('#serviceSelect').val();
+                                            // Fetch data using getDataTotals method from radacctController
+                                            $.ajax({
+                                                url: '/admin/data-totals/' + selectedService + '/' + startDate.format('YYYY-MM-DD HH:mm:ss') + '/' +
+                                                    endDate.format('YYYY-MM-DD HH:mm:ss'),
+                                                method: 'GET',
+                                                success: function(response) {
+                                                    // Update UI with the new data
+                                                    $('#total-download').text(formatBytes(response.total_download));
+                                                    $('#total-upload').text(formatBytes(response.total_upload));
+                                                    $('#total-uptime').text(formatUptime(response.total_uptime));
+                                                    $('#total-sessions').text(response.total_sessions);
+
+                                                    // // Update daily usage graph
+                                                    // updateDailyUsageGraph(response.daily_usage);
+                                                },
+                                                error: function(error) {
+                                                    console.error('Error fetching data:', error);
+                                                }
+                                            });
+                                        }
+
+                                        function formatBytes(bytes) {
+                                            if (bytes === 0) return '0 Bytes';
+                                            const k = 1024;
+                                            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+                                            const i = Math.floor(Math.log(bytes) / Math.log(k));
+                                            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+                                        }
+
+                                        function formatUptime(seconds) {
+                                            const days = Math.floor(seconds / 86400);
+                                            const hours = Math.floor((seconds % 86400) / 3600);
+                                            const minutes = Math.floor((seconds % 3600) / 60);
+                                            return days + 'd ' + hours + 'h ' + minutes + 'm';
+                                        }
+                                    </script>
+
                                     <div id="activeSessionContainer">
                                         <!-- Active session data will be loaded here -->
                                     </div>
@@ -388,9 +508,11 @@
                                         <div class="card-header">Live Bandwidth Usage</div>
                                         <div>
                                             <div class="d-flex justify-content-between">
-                                                <select id="subscription" class="form-select me-2" aria-label="Select subscription">
+                                                <select id="subscription" class="form-select me-2"
+                                                    aria-label="Select subscription">
                                                     @foreach ($subscriptions as $subscription)
-                                                        <option value="{{ $subscription->id }}" {{ $loop->first ? 'selected' : '' }}>
+                                                        <option value="{{ $subscription->id }}"
+                                                            {{ $loop->first ? 'selected' : '' }}>
                                                             {{ $subscription->service }} #{{ $subscription->id }}
                                                         </option>
                                                     @endforeach
@@ -401,12 +523,268 @@
                                                     <option value="300000">Last 5 Minutes</option>
                                                     <option value="600000">Last 10 Minutes</option>
                                                 </select>
-                                            </div>                                        </div>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div class="card-body">
                                         <button id="refreshButton" onclick="refreshRealtimeChart()">Refresh</button>
                                         <canvas id="bandwidthChart" width="400" height="80"></canvas>
+                                    </div>
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-3">
+                                                    <div id="dataDisplay" class="mt-3">
+                                                        <table class="table table-striped">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th colspan="2">Total for Period</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td>Total Sessions:</td>
+                                                                    <td><span id="total-sessions"></span></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td>Total Download:</td>
+                                                                    <td><span id="total-download"></span></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td>Total Upload:</td>
+                                                                    <td><span id="total-upload"></span></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td>Total Uptime:</td>
+                                                                    <td><span id="total-uptime"></span></td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-9 d-flex flex-column">
+                                                    <div class="d-flex justify-content-end mb-3">
+                                                        <label for="bandwidthPeriod"
+                                                            class="me-2 align-self-center">Select Period:</label>
+                                                        <select id="bandwidthPeriod" class="form-select"
+                                                            style="width: auto;">
+                                                            <option value="hourly">Hourly</option>
+                                                            <option value="daily">Daily</option>
+                                                            <option value="weekly">Weekly</option>
+                                                            <option value="monthly">Monthly</option>
+                                                            <option value="yearly">Yearly</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="flex-grow-1" style="height: 200px;">
+                                                        <canvas id="bandwidthAverageChart"></canvas>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <script>
+                                        let bandwidthAverageChart;
+
+                                        function updateBandwidthChart(period) {
+                                            const username = $('#serviceSelect').val();
+                                            fetch(`/bandwidth/average/${username}`)
+                                                .then(response => response.json())
+                                                .then(data => {
+                                                    const ctx = document.getElementById('bandwidthAverageChart').getContext('2d');
+
+                                                    if (bandwidthAverageChart) {
+                                                        bandwidthAverageChart.destroy();
+                                                    }
+
+                                                    const chartData = data[period];
+                                                    const labels = chartData.map(item => item[Object.keys(item)[0]]);
+                                                    const downloadValues = chartData.map(item => item.average_upload);
+                                                    const uploadValues = chartData.map(item => item.average_download);
+
+                                                    bandwidthAverageChart = new Chart(ctx, {
+                                                        type: 'line',
+                                                        data: {
+                                                            labels: labels,
+                                                            datasets: [{
+                                                                    label: 'Average Download',
+                                                                    data: downloadValues,
+                                                                    borderColor: 'rgb(75, 192, 192)',
+                                                                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                                                    fill: true,
+                                                                    tension: 0.4,
+                                                                    cubicInterpolationMode: 'monotone'
+                                                                },
+                                                                {
+                                                                    label: 'Average Upload',
+                                                                    data: uploadValues,
+                                                                    borderColor: 'rgb(255, 99, 132)',
+                                                                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                                                                    fill: true,
+                                                                    tension: 0.4,
+                                                                    cubicInterpolationMode: 'monotone'
+                                                                }
+                                                            ]
+                                                        },
+                                                        options: {
+                                                            responsive: true,
+                                                            maintainAspectRatio: false,
+                                                            animation: {
+                                                                duration: 0
+                                                            },
+                                                            scales: {
+                                                                y: {
+                                                                    beginAtZero: true,
+                                                                    title: {
+                                                                        display: true,
+                                                                        text: 'Bandwidth'
+                                                                    },
+                                                                    ticks: {
+                                                                        callback: function(value) {
+                                                                            return formatBandwidth(value);
+                                                                        }
+                                                                    }
+                                                                }
+                                                            },
+                                                            plugins: {
+                                                                tooltip: {
+                                                                    callbacks: {
+                                                                        label: function(context) {
+                                                                            let label = context.dataset.label || '';
+                                                                            if (label) {
+                                                                                label += ': ';
+                                                                            }
+                                                                            label += formatBandwidth(context.parsed.y);
+                                                                            return label;
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    });
+                                                });
+                                        }
+
+                                        function formatBandwidth(bytes) {
+                                            const units = ['bps', 'Kbps', 'Mbps', 'Gbps', 'Tbps'];
+                                            let value = bytes * 8; // Convert bytes/s to bits/s
+                                            let unitIndex = 0;
+                                            while (value >= 1024 && unitIndex < units.length - 1) {
+                                                value /= 1024;
+                                                unitIndex++;
+                                            }
+                                            return value.toFixed(2) + ' ' + units[unitIndex];
+                                        }
+
+                                        document.getElementById('bandwidthPeriod').addEventListener('change', function() {
+                                            updateBandwidthChart(this.value);
+                                        });
+
+                                        // Initial chart load
+                                        updateBandwidthChart('hourly');
+                                    </script>
+                                    <div class="mt-4">
+                                        <canvas id="dailyBandwidthChart"></canvas>
+                                    </div>
+
+                                    <script>
+                                        function updateDailyBandwidthChart(start,end) {
+                                            const username = $('#serviceSelect').val();
+                                            fetch(`/bandwidth/daily?username=${username}&start_date=${start.format('YYYY-MM-DD')}&end_date=${end.format('YYYY-MM-DD')}`).then(response =>
+                                                    response.json())
+                                                .then(data => {
+                                                    // Ensure the last record is the end date
+                                                    const endDate = end.format('YYYY-MM-DD');
+                                                    if (data.length === 0 || data[data.length - 1].date !== endDate) {
+                                                        data.push({
+                                                            date: endDate,
+                                                            total_download: 0,
+                                                            total_upload: 0
+                                                        });
+                                                    }
+
+                                                    const ctx = document.getElementById('dailyBandwidthChart').getContext('2d');
+                                                    new Chart(ctx, {
+                                                        type: 'bar',
+                                                        data: {
+                                                            labels: data.map(item => item.date),
+                                                            datasets: [{
+                                                                    label: 'Download',
+                                                                    data: data.map(item => item.total_upload),
+                                                                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                                                                    borderColor: 'rgba(75, 192, 192, 1)',
+                                                                    borderWidth: 1
+                                                                },
+                                                                {
+                                                                    label: 'Upload',
+                                                                    data: data.map(item => item.total_download),
+                                                                    backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                                                                    borderColor: 'rgba(255, 99, 132, 1)',
+                                                                    borderWidth: 1
+                                                                }
+                                                            ]
+                                                        },
+                                                        options: {
+                                                            responsive: true,
+                                                            scales: {
+                                                                x: {
+                                                                    stacked: true,
+                                                                    title: {
+                                                                        display: true,
+                                                                        text: 'Date'
+                                                                    }
+                                                                },
+                                                                y: {
+                                                                    stacked: true,
+                                                                    beginAtZero: true,
+                                                                    title: {
+                                                                        display: true,
+                                                                        text: 'Bandwidth'
+                                                                    },
+                                                                    ticks: {
+                                                                        callback: function(value) {
+                                                                            return formatBytes(value);
+                                                                        }
+                                                                    }
+                                                                }
+                                                            },
+                                                            plugins: {
+                                                                tooltip: {
+                                                                    callbacks: {
+                                                                        label: function(context) {
+                                                                            let label = context.dataset.label || '';
+                                                                            if (label) {
+                                                                                label += ': ';
+                                                                            }
+                                                                            label += formatBytes(context.parsed.y);
+                                                                            return label;
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    });
+                                                });
+                                        }
+                                    </script>
+
+                                    <div class="mt-4">
+                                        <table id="endedSessionsTable" class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Start Time</th>
+                                                    <th>Stop Time</th>
+                                                    <th>Duration</th>
+                                                    <th>Download</th>
+                                                    <th>Upload</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Ended sessions will be populated here dynamically -->
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
@@ -448,7 +826,7 @@
 
         if (tabId === 'statistics') {
             // setupRealtimeChart();
-            refreshRealtimeChart()
+            refreshRealtimeChart();
             loadActiveSessions();
         } else {
             // Close existing SSE connection if open
@@ -709,74 +1087,73 @@
 
     // Finding active sessions
     function loadActiveSessions() {
+        const formatBytes = (bytes) => {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        };
+
+        const secondsToHHMMSS = (seconds) => {
+            return new Date(seconds * 1000).toISOString().substr(11, 8);
+        };
+
         fetch('/admin/active-session', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({
-                    customer_id: '{{ $customer->id }}'
-                })
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                customer_id: '{{ $customer->id }}'
             })
-            .then(response => response.json())
-            .then(data => {
-                const container = document.getElementById('activeSessionContainer');
-                if (data.success) {
-                    const sessions = data.active_sessions;
-                    const formatBytes = (bytes) => {
-                        if (bytes === 0) return '0 B';
-                        const k = 1024;
-                        const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-                        const i = Math.floor(Math.log(bytes) / Math.log(k));
-                        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-                    };
-                    const secondsToHHMMSS = (seconds) => {
-                        return new Date(seconds * 1000).toISOString().substr(11, 8);
-                    };
-                    let html = `
+        })
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('activeSessionContainer');
+            if (data.success) {
+                const sessions = data.active_sessions;
+                const tableRows = sessions.map(session => `
+                    <tr>
+                        <td>${session.username}</td>
+                        <td>${formatBytes(session.acctinputoctets || 0)}</td>
+                        <td>${formatBytes(session.acctoutputoctets || 0)}</td>
+                        <td>${session.acctstarttime}</td>
+                        <td>${secondsToHHMMSS(session.acctsessiontime || 0)}</td>
+                        <td>${session.framedipaddress}</td>
+                        <td>${session.nasipaddress}</td>
+                    </tr>
+                `).join('');
+
+                container.innerHTML = `
                     <div class="card mb-3">
                         <div class="card-header">Active Sessions</div>
                         <div class="card-body">
                             <table class="table table-bordered">
                                 <thead>
-                                    <th>Login</th>
-                                    <th>In</th>
-                                    <th>Out</th>
-                                    <th>Start at</th>
-                                    <th>Duration</th>
-                                    <th>IP</th>
-                                    <th>NAS</th>
+                                    <tr>
+                                        <th>Login</th>
+                                        <th>In</th>
+                                        <th>Out</th>
+                                        <th>Start at</th>
+                                        <th>Duration</th>
+                                        <th>IP</th>
+                                        <th>NAS</th>
+                                    </tr>
                                 </thead>
-                                <tbody>`;
-                    
-                    sessions.forEach(session => {
-                        html += `
-                            <tr>
-                                <td>${session.username}</td>
-                                <td>${session.acctinputoctets ? formatBytes(session.acctinputoctets) : '0 B'}</td>
-                                <td>${session.acctoutputoctets ? formatBytes(session.acctoutputoctets) : '0 B'}</td>
-                                <td>${session.acctstarttime}</td>
-                                <td>${session.acctsessiontime ? secondsToHHMMSS(session.acctsessiontime) : '00:00:00'}</td>
-                                <td>${session.framedipaddress}</td>
-                                <td>${session.nasipaddress}</td>
-                            </tr>`;
-                    });
-                    
-                    html += `
+                                <tbody>
+                                    ${tableRows}
                                 </tbody>
                             </table>
                         </div>
                     </div>`;
-                    
-                    container.innerHTML = html;
-                } 
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('activeSessionsContainer').innerHTML =
-                    '<p>Error loading active sessions data.</p>';
-            });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('activeSessionContainer').innerHTML = '<p>Error loading active sessions data.</p>';
+        });
     }
 
     // Load active sessions data when the page loads
@@ -868,5 +1245,47 @@
             }
         });
     }
+
+    function loadEndedSessions(startDate, endDate) {
+        const username = $('#serviceSelect').val();
+        fetch(
+                `/admin/ended-sessions/${username}?start_date=${startDate.format('YYYY-MM-DD')}&end_date=${endDate.format('YYYY-MM-DD')}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const tableBody = document.querySelector('#endedSessionsTable tbody');
+                    tableBody.innerHTML = '';
+                    data.data.forEach(session => {
+                        const row = `
+                                                                <tr>
+                                                                    <td>${session.radacctid}</td>
+                                                                    <td>${new Date(session.acctstarttime).toLocaleString()}</td>
+                                                                    <td>${new Date(session.acctstoptime).toLocaleString()}</td>
+                                                                    <td>${formatDuration(session.acctsessiontime)}</td>
+                                                                      <td>${formatBytes(session.acctoutputoctets)}</td>
+                                                                    <td>${formatBytes(session.acctinputoctets)}</td>
+                                                                </tr>
+                                                            `;
+                        tableBody.innerHTML += row;
+                    });
+                } else {
+                    console.error('No ended sessions found');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    function formatDuration(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const remainingSeconds = seconds % 60;
+        return `${hours}h ${minutes}m ${remainingSeconds}s`;
+    }
+
+    function formatBytes(bytes) {
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        if (bytes === 0) return '0 Byte';
+        const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+        return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+    }
 </script>
-{{-- END ACTIVE SESSION SCRIPT --}}
