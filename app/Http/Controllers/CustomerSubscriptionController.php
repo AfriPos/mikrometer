@@ -144,135 +144,168 @@ class CustomerSubscriptionController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, CustomerSubscriptionModel $subscriptionid)
-    {
-        // dd($request->all());
-
-        // begin transaction
-        DB::beginTransaction();
-
-        try {
-            // Validate form data
-            $validatedData = $request->validate([
-                'status' => 'required|string|max:255',
-                'ipaddress' => 'required|string|ip|max:255',
-                'pppoe_login' => 'required|string|max:255',
-                'pppoe_password' => 'required|string|max:255',
-                'service_price' => 'required|integer',
-                'nas_id' => 'required|integer',
-            ]);
-
-            $changes = [];
-
-            // Release previously assigned IP address if new IP is different
-            if ($subscriptionid->ipaddress != $validatedData['ipaddress']) {
-                $this->releaseIpAddress($subscriptionid->username);
-
-                // Allocate new IP address
-                $this->allocateIpAddress($validatedData['ipaddress'], $subscriptionid->pppoe_login);
-
-                // Update radreply table
-                $radreply = Radreply::where('username', $subscriptionid->pppoe_login)
-                    ->where('attribute', 'Framed-IP-Address')
-                    ->first();
-                if ($radreply) {
-                    $radreply->update([
-                        'value' => $validatedData['ipaddress']
-                    ]);
-                } else {
-                    Radreply::create([
-                        'username' => $subscriptionid->pppoe_login,
-                        'attribute' => 'Framed-IP-Address',
-                        'op' => '=',
-                        'value' => $validatedData['ipaddress']
-                    ]);
-                }
-
-                $changes['ip_address'] = $validatedData['ipaddress'];
-            }
-
-            // Update the pppoe_password if new password is different
-            if ($subscriptionid->pppoe_password != $validatedData['pppoe_password']) {
-                $radcheck = Radcheck::where('username', $subscriptionid->pppoe_login)
-                    ->where('attribute', 'Cleartext-Password')
-                    ->first();
-                if ($radcheck) {
-                    $radcheck->update([
-                        'value' => $validatedData['pppoe_password']
-                    ]);
-                } else {
-                    Radcheck::create([
-                        'username' => $subscriptionid->pppoe_login,
-                        'attribute' => 'Cleartext-Password',
-                        'op' => '=',
-                        'value' => $validatedData['pppoe_password']
-                    ]);
-                }
-
-                $changes['password'] = $validatedData['pppoe_password'];
-            }
-
-            // Update the pppoe_login if new login is different
-            if ($subscriptionid->pppoe_login != $validatedData['pppoe_login']) {
-                // Update Radcheck table
-                $radcheckRecords = Radcheck::where('username', $subscriptionid->pppoe_login)->get();
-
-                foreach ($radcheckRecords as $radcheck) {
-                    $radcheck->update([
-                        'username' => $validatedData['pppoe_login']
-                    ]);
-                }
-
-                // Update Radreply table
-                $radreplyRecords = Radreply::where('username', $subscriptionid->pppoe_login)->get();
-
-                foreach ($radreplyRecords as $radreply) {
-                    $radreply->update([
-                        'username' => $validatedData['pppoe_login']
-                    ]);
-                }
-
-                $changes['username'] = $validatedData['pppoe_login'];
-            }
-
-            // Update subscription details
-            $subscriptionid->update($validatedData);
-
-            DB::commit();
-            
-                        // Check if the data in the DB is different from the data being updated
-                        $existingSubscription = CustomerSubscriptionModel::find($subscriptionid->id);
-                        $dataChanged = false;
-
-                        // Compare relevant fields
-                        if ($existingSubscription->pppoe_login != $validatedData['pppoe_login'] ||
-                            $existingSubscription->pppoe_password != $validatedData['pppoe_password'] ||
-                            $existingSubscription->service_id != $validatedData['service_id'] ||
-                            $existingSubscription->nas_id != $validatedData['nas_id']) {
-                            $dataChanged = true;
-                        }
-
-                        // Call the routerSyncController function only if data has changed
-                        if ($dataChanged) {
-                            $routerSyncController = new routerSyncController();
-                            $routerApi = new RouterosAPI();
-                            $routerCredentials = RouterCredential::where('id', $validatedData['nas_id'])->first();
-                            $routerIp = $routerCredentials->nasname;
-                            $routerUsername = $routerCredentials->username;
-                            $routerPassword = $routerCredentials->password;
-                            $username = $validatedData['pppoe_login'];
-                            $result = $routerSyncController->universalCoa($routerApi, $routerIp, $routerUsername, $routerPassword, $username);
-  
-                            if (!$result['success']) {
-                                throw new \Exception($result['message']);
-                            }
-                        }            return redirect()->back()->with('success', 'Customer subscription updated successfully!');
-        } catch (\Throwable $th) {
-            DB::rollBack();
-            dd($th);
-            // return redirect()->back()->with('error', 'An error occured while creating the service');
-        }
-    }
+ 
+     public function update(Request $request, CustomerSubscriptionModel $subscriptionid)
+     {
+         // dd($request->all());
+ 
+         // begin transaction
+         DB::beginTransaction();
+ 
+         try {
+             // Validate form data
+             $validatedData = $request->validate([
+                 'status' => 'required|string|max:255',
+                 'ipaddress' => 'required|string|ip|max:255',
+                 'pppoe_login' => 'required|string|max:255',
+                 'pppoe_password' => 'required|string|max:255',
+                 'service_price' => 'required|integer',
+                 'nas_id' => 'required|integer',
+             ]);
+ 
+             $changes = [];
+ 
+             // Release previously assigned IP address if new IP is different
+             if ($subscriptionid->ipaddress != $validatedData['ipaddress']) {
+                 $this->releaseIpAddress($subscriptionid->ipaddress);
+ 
+                 // Allocate new IP address
+                 $this->allocateIpAddress($validatedData['ipaddress'], $subscriptionid->pppoe_login);
+ 
+                 // Update radreply table
+                 $radreply = Radreply::where('username', $subscriptionid->pppoe_login)
+                     ->where('attribute', 'Framed-IP-Address')
+                     ->first();
+                 if ($radreply) {
+                     $radreply->update([
+                         'value' => $validatedData['ipaddress']
+                     ]);
+                 } else {
+                     Radreply::create([
+                         'username' => $subscriptionid->pppoe_login,
+                         'attribute' => 'Framed-IP-Address',
+                         'op' => '=',
+                         'value' => $validatedData['ipaddress'],
+                         'customer_subscription_id' => $subscriptionid->id,
+                     ]);
+                 }
+ 
+                 $changes['ip_address'] = $validatedData['ipaddress'];
+             }
+ 
+             // Update the pppoe_password if new password is different
+             if ($subscriptionid->pppoe_password != $validatedData['pppoe_password']) {
+                 $radcheck = Radcheck::where('username', $subscriptionid->pppoe_login)
+                     ->where('attribute', 'Cleartext-Password')
+                     ->first();
+                 if ($radcheck) {
+                     $radcheck->update([
+                         'value' => $validatedData['pppoe_password'],
+                         'customer_subscription_id' => $subscriptionid->id,
+                     ]);
+                 } else {
+                     Radcheck::create([
+                         'username' => $subscriptionid->pppoe_login,
+                         'attribute' => 'Cleartext-Password',
+                         'op' => '=',
+                         'value' => $validatedData['pppoe_password'],
+                         'customer_subscription_id' => $subscriptionid->id,
+                     ]);
+                 }
+ 
+                 $changes['password'] = $validatedData['pppoe_password'];
+             }
+ 
+             // Update the pppoe_login if new login is different
+             if ($subscriptionid->pppoe_login != $validatedData['pppoe_login']) {
+                 // Update Radcheck table
+                 $radcheckRecords = Radcheck::where('username', $subscriptionid->pppoe_login)->get();
+ 
+                 foreach ($radcheckRecords as $radcheck) {
+                     $radcheck->update([
+                         'username' => $validatedData['pppoe_login']
+                     ]);
+                 }
+ 
+                 // Update Radreply table
+                 $radreplyRecords = Radreply::where('username', $subscriptionid->pppoe_login)->get();
+ 
+                 foreach ($radreplyRecords as $radreply) {
+                     $radreply->update([
+                         'username' => $validatedData['pppoe_login']
+                     ]);
+                 }
+ 
+                 $changes['username'] = $validatedData['pppoe_login'];
+             }
+ 
+             // Check if the status has been changed
+             if ($subscriptionid->status != $validatedData['status']) {
+                 $changes['status'] = $validatedData['status'];
+ 
+                 // Update the status in the radcheck table
+                 $radcheckStatus = Radcheck::where('username', $subscriptionid->pppoe_login)
+                     ->where('attribute', 'User-Profile')
+                     ->first();
+ 
+                 if ($radcheckStatus) {
+                     $radcheckStatus->update([
+                         'value' => $validatedData['status'] == 'active' ? $subscriptionid->service : 'disabled',
+                     ]);
+                 } else {
+                     Radcheck::create([
+                         'username' => $subscriptionid->pppoe_login,
+                         'attribute' => 'User-Profile',
+                         'op' => ':=',
+                         'value' => $validatedData['status'] == 'active' ? $subscriptionid->service : 'disabled',
+                         'customer_subscription_id' => $subscriptionid->id,
+                     ]);
+                 }
+             }
+ 
+             // Check if the data in the DB is different from the data being updated
+             $dataChanged = false;
+ 
+             // Compare relevant fields
+             if (
+                 $subscriptionid->pppoe_login != $validatedData['pppoe_login'] ||
+                 $subscriptionid->pppoe_password != $validatedData['pppoe_password'] ||
+                 $subscriptionid->ipaddress != $validatedData['ipaddress'] ||
+                 $subscriptionid->status != $validatedData['status'] ||
+                 $subscriptionid->nas_id != $validatedData['nas_id']
+             ) {
+                 $dataChanged = true;
+             }
+             
+             // Call the routerSyncController function only if data has changed
+             if ($dataChanged) {
+                 $routerSyncController = new routerSyncController();
+                 $routerApi = new RouterosAPI();
+                 $routerCredentials = RouterCredential::where('id', $validatedData['nas_id'])->first();
+                 $routerIp = $routerCredentials->nasname;
+                 $routerUsername = $routerCredentials->username;
+                 $routerPassword = $routerCredentials->password;
+                 $username = $validatedData['pppoe_login'];
+                 $result = $routerSyncController->universalCoa($routerApi, $routerIp, $routerUsername, $routerPassword, $username);
+ 
+                 if (!$result['success']) {
+                     throw new \Exception($result['message']);
+                 }
+             }
+ 
+ 
+             // Update subscription details
+             $subscriptionid->update($validatedData);
+             
+             DB::commit();
+ 
+             return redirect()->back()->with('success', 'Customer subscription updated successfully!');
+         } catch (\Throwable $th) {
+             DB::rollBack();
+             dd($th);
+             // return redirect()->back()->with('error', 'An error occured while creating the service');
+         }
+     }
 
     /**
      * Remove the specified resource from storage.
@@ -307,10 +340,10 @@ class CustomerSubscriptionController extends Controller
     }
 
     // releases all ips assinged to a customer
-    private function releaseIpAddress($customerId)
+    private function releaseIpAddress($ipaddress)
     {
         DB::table('ip_addresses')
-            ->where('customer_id', $customerId)
+            ->where('ip_address', $ipaddress)
             ->update([
                 'is_used' => false,
                 'customer_id' => null,

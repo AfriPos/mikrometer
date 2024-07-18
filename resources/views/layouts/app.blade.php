@@ -56,7 +56,10 @@
     <script src="https://cdn.jsdelivr.net/npm/moment"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming"></script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daterangepicker@3.1.0/daterangepicker.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker@3.1.0/daterangepicker.css">
+      <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/custom.js', 'resources/css/nucleo-icons.css', 'resources/css/nucleo-svg.css', 'resources/css/soft-ui-dashboard.css', 'resources/css/soft-ui-dashboard.min.css', 'resources/js/bootstrap-notify.js', 'resources/js/bootstrap.js', 'resources/js/Chart.extension.js', 'resources/js/chartjs.min.js', 'resources/js/perfect-scrollbar.min.js', 'resources/js/resources/js/popper.min.js', 'resources/js/soft-ui-dashboard.js', 'resources/js/soft-ui-dashboard.min.js'])
