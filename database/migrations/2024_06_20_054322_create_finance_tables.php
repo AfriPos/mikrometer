@@ -16,6 +16,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('customer_id');
             $table->decimal('amount', 8, 2);
+            $table->decimal('due_amount', 8, 2);
             $table->date('due_date');
             $table->string('status');
             $table->string('type');
@@ -27,7 +28,7 @@ return new class extends Migration
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('customer_id');
-            $table->unsignedBigInteger('invoice_id');
+            $table->unsignedBigInteger('invoice_id')->nullable();
             $table->decimal('amount', 8, 2);
             $table->string('payment_method');
             $table->string('transaction_id');
@@ -55,6 +56,23 @@ return new class extends Migration
             $table->foreign('customer_id')->references('id')->on('customers');
             $table->timestamps();
         });
+
+        Schema::create('financial_records', function (Blueprint $table) {
+            $table->id();
+            $table->string('type'); // This can be 'invoice', 'payment', 'credit_note', 'future_item'
+            $table->morphs('recordable'); // This will create `recordable_id` and `recordable_type`
+            $table->decimal('amount', 8, 2)->nullable();
+            $table->string('payment_method')->nullable();
+            $table->string('transaction_id')->nullable();
+            $table->string('comment')->nullable();
+            $table->string('reason')->nullable();
+            $table->string('name')->nullable();
+            $table->text('description')->nullable();
+            $table->unsignedBigInteger('customer_id')->nullable();
+            $table->foreign('customer_id')->references('id')->on('customers');
+            $table->timestamps();
+        });
+
     }
 
     /**
@@ -66,5 +84,6 @@ return new class extends Migration
         Schema::dropIfExists('credit_notes');
         Schema::dropIfExists('invoices');
         Schema::dropIfExists('future_items');
+        Schema::dropIfExists('financial_records');
     }
 };

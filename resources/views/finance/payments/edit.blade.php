@@ -33,14 +33,14 @@
                             value={{ $payment->amount }}>
                         <label for="amount" class="form-label">Amount</label>
                     </div>
-
+                    
                     <div class="form-floating mb-3 d-flex">
-                        <input type="text" class="form-control" id="transaction_id" name="transaction_id"
-                            placeholder="" value={{ $payment->transaction_id }}>
-                        <label for="transaction_id" class="form-label">Receipt Number</label>
+                        <input type="text" class="form-control" id="edit_transaction_id" name="transaction_id"
+                            placeholder="" value="{{ $payment->transaction_id }}">
+                        <label for="edit_transaction_id" class="form-label">Receipt Number</label>
                         <div class="input-group-append ms-2 form-floating">
                             <button type="button" class="form-control btn btn-outline-primary"
-                                data-target="recieptnumber" onclick="setReceiptNumber()"><i
+                                data-target="edit_transaction_id" onclick="setReceiptNumber(this)"><i
                                     class="fa-solid fa-wand-sparkles"></i></button>
                         </div>
                     </div>

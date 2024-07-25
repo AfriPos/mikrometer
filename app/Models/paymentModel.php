@@ -20,4 +20,9 @@ class paymentModel extends Model
     {
         return $this->belongsTo(CustomerModel::class);
     }
+    
+    public function records()
+    {
+        return $this->morphMany('App\Models\financerecordsModel', 'recordable');
+    }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CustomerSubscriptionModel;
+use App\Models\dataUsage;
 use App\Models\radacct;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -39,26 +40,28 @@ class radacctController extends Controller
      */
     public function show(Request $request)
     {
-        $customerId = $request->input('customer_id');
-        $subscriptions = CustomerSubscriptionModel::where('customer_id', $customerId)->get();
-        $activeSessions = collect();
+        $username = $request->input('pppoe');
 
-        foreach ($subscriptions as $subscription) {
-            $sessions = radacct::where('username', $subscription->pppoe_login)
-                               ->where('acctstoptime', null)
-                               ->get();
-            $activeSessions = $activeSessions->concat($sessions);
-        }
+        if ($username) {
+            $activeSessions = radacct::where('username', $username)
+                ->where('acctstoptime', null)
+                ->get();
 
-        if ($activeSessions->isNotEmpty()) {
-            return response()->json([
-                'success' => true,
-                'active_sessions' => $activeSessions,
-            ]);
+            if ($activeSessions->isNotEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'active_sessions' => $activeSessions,
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No active sessions found for this username.',
+                ]);
+            }
         } else {
             return response()->json([
                 'success' => false,
-                'message' => 'No active sessions found for this customer.',
+                'message' => 'No username provided.',
             ]);
         }
     }
@@ -95,30 +98,40 @@ class radacctController extends Controller
      */
     public function getDataTotals($username, $startDate, $endDate)
     {
-        $data = radacct::where('username', $username)
+        $dataUsage = dataUsage::where('username', $username)
+            ->whereBetween('period_start', [$startDate, $endDate])
+            ->where(function ($query) {
+                $query->where('acctinputoctets', '>', 0)
+                    ->orWhere('acctoutputoctets', '>', 0);
+            })
+            ->selectRaw('SUM(acctinputoctets) as total_download, SUM(acctoutputoctets) as total_upload')
+            ->first();
+
+        $radacctData = radacct::where('username', $username)
             ->whereBetween('acctstarttime', [$startDate, $endDate])
-            ->selectRaw('SUM(acctinputoctets) as total_upload, SUM(acctoutputoctets) as total_download, SUM(acctsessiontime) as total_uptime, COUNT(*) as total_sessions')
+            ->whereNotNull('acctstoptime')
+            ->selectRaw('SUM(acctsessiontime) as total_uptime, COUNT(*) as total_sessions')
             ->first();
 
         return [
-            'total_download' => $data->total_download ?? 0,
-            'total_upload' => $data->total_upload ?? 0,
-            'total_uptime' => $data->total_uptime ?? 0,
-            'total_sessions' => $data->total_sessions ?? 0,
+            'total_download' => $dataUsage->total_download ?? 0,
+            'total_upload' => $dataUsage->total_upload ?? 0,
+            'total_uptime' => $radacctData->total_uptime ?? 0,
+            'total_sessions' => $radacctData->total_sessions ?? 0,
         ];
     }
-   
+
     public function showEndedSessions(Request $request, $username)
     {
-        $startDate = $request->query('start_date');
-        $endDate = $request->query('end_date');
+        $startDate = Carbon::createFromDate($request->query('start_date'));
+        $endDate = Carbon::createFromDate($request->query('end_date'));
 
         $query = radacct::where('username', $username)
             ->whereNotNull('acctstoptime')
             ->orderBy('acctstoptime', 'desc');
 
         if ($startDate && $endDate) {
-            $query->whereBetween('acctstoptime', [$startDate, $endDate]);
+            $query->whereBetween('acctstoptime', [$startDate->startOfDay(), $endDate->endOfDay()]);
         }
 
         $endedSessions = $query->get();
@@ -135,5 +148,4 @@ class radacctController extends Controller
             ]);
         }
     }
-
 }

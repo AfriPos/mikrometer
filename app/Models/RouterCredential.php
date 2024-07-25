@@ -22,7 +22,9 @@ class RouterCredential extends Model
         'description',
         'ip_pool',
         'configured',
-        'geo_data'
+        'latitude',
+        'longitude',
+        'locationid',
     ];
 
     /**

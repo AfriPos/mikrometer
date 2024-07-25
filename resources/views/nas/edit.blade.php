@@ -82,7 +82,7 @@
 
                                 <div class="form-floating mb-3 position-relative">
                                     <input type="password" class="form-control" id="password" name="password"
-                                        placeholder="" value={{ $nas->password }} autocomplete="new-password">
+                                        placeholder="" autocomplete="new-password" value={{ $nas->password }}>
                                     <label for="password">Password (API)</label>
                                     <button type="button"
                                         class="btn btn-outline-secondary position-absolute end-0 top-50 translate-middle-y me-2"

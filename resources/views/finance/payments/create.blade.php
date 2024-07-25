@@ -35,7 +35,7 @@
                         <label for="transaction_id" class="form-label">Receipt Number</label>
                         <div class="input-group-append ms-2 form-floating">
                             <button type="button" class="form-control btn btn-outline-primary"
-                                data-target="recieptnumber" onclick="setReceiptNumber()"><i
+                                data-target="transaction_id" onclick="setReceiptNumber(this)"><i
                                     class="fa-solid fa-wand-sparkles"></i></button>
                         </div>
                     </div>
@@ -67,8 +67,9 @@
         return receiptNumber;
     }
 
-    function setReceiptNumber() {
+    function setReceiptNumber(button) {
+        var targetId = button.getAttribute('data-target');
         var receiptNumber = generateID();
-        document.getElementById("transaction_id").value = receiptNumber;
+        document.getElementById(targetId).value = receiptNumber;
     }
 </script>

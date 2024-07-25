@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Auth\CustomerLoginController;
+use App\Http\Controllers\BandwidthController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CustomerController;
@@ -9,6 +11,7 @@ use App\Http\Controllers\PPPoEServiceController;
 use App\Http\Controllers\RouterController;
 use App\Http\Controllers\CustomerSubscriptionController;
 use App\Http\Controllers\dashboardController;
+use App\Http\Controllers\invoiceController;
 use App\Http\Controllers\locationsController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\radacctController;
@@ -17,12 +20,27 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\routerSyncController;
 
 Route::get('/', function () {
-    return redirect('/admin/dashboard');
+    return redirect('/portal');
 });
 
 // Route::get('/admin/dashboard', function () {
 //     return view('dashboard');
 // })->middleware(['auth', 'verified'])->name('dashboard');
+
+// Customer Authentication
+Route::get('customer/login', [CustomerLoginController::class, 'create'])
+    ->name('customer.login');
+Route::post('customer/login', [CustomerLoginController::class, 'store']);
+Route::post('customer/logout', [CustomerLoginController::class, 'destroy'])
+    ->name('customer.logout');
+
+
+Route::middleware(['auth:customer'])->group(function () {
+    Route::get('/customer/dashboard', function () {
+        return view('customer.dashboard');
+    })->name('customer.dashboard');
+});
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/admin/dashboard', [dashboardController::class, 'index'])->name('dashboard');
@@ -79,9 +97,24 @@ Route::middleware('auth')->group(function () {
     Route::put('/admin/payment/{payment}', [PaymentController::class, 'update'])->name('payment.update');
     Route::get('/admin/dispatch', [PaymentController::class, 'dispatch'])->name('payment.dispatch');
 
+    // Invoice
+    Route::get('/admin/invoices', [invoiceController::class, 'index'])->name('invoice.index');
+    Route::get('/admin/invoice/create', [InvoiceController::class, 'create'])->name('invoice.create');
+    Route::post('/admin/invoice/{customer}', [InvoiceController::class, 'store'])->name('invoice.store');
+    Route::get('/admin/invoice/{invoice}', [InvoiceController::class, 'show'])->name('invoice.show');
+    Route::get('/admin/invoice/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoice.edit');
+    Route::put('/admin/invoice/{invoice}', [InvoiceController::class, 'update'])->name('invoice.update');
+    Route::delete('/admin/invoice/{invoice}', [InvoiceController::class, 'destroy'])->name('invoice.destroy');
+
+
     // others
     Route::get('/sse', 'App\Http\Controllers\SSEController@stream');
     Route::get('/ping', 'App\Http\Controllers\RouterController@pingInitialize');
+    Route::post('/admin/active-session', [radacctController::class, 'show'])->name('radacct.show');
+    Route::get('/admin/data-totals/{username}/{startDate}/{endDate}', [radacctController::class, 'getDataTotals'])->name('radacct.getDataTotals');
+    Route::get('/admin/ended-sessions/{username}', [radacctController::class, 'showEndedSessions'])->name('radacct.ended-sessions');
+    Route::get('/bandwidth/average', [BandwidthController::class, 'getAverageBandwidth'])->name('bandwidth.average');
+    Route::get('/bandwidth/daily', [BandwidthController::class, 'getTotalDailyBandwidth'])->name('bandwidth.total-daily');
 
     // Accounting
     Route::post('/admin/active-session', [radacctController::class, 'show'])->name('radacct.show');

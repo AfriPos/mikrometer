@@ -7,12 +7,12 @@ use App\Jobs\CheckExpiredSubscriptionsJob;
 use App\Models\CustomerModel;
 use Illuminate\Http\Request;
 use App\Models\CustomerSubscriptionModel;
+use App\Models\financerecordsModel;
 use App\Models\InvoiceModel;
 use App\Models\paymentModel;
 use App\Models\PPPoEService;
-use App\Models\radreply;
-use App\Models\RouterCredential;
-use App\MyHelper\RouterosAPI;
+use App\Models\radcheck;
+use App\Models\Transaction;
 use Illuminate\Support\Facades\DB;
 
 class PaymentController extends Controller
@@ -48,24 +48,72 @@ class PaymentController extends Controller
 
             // Create a new payment record
             $payment = paymentModel::create($validatedData + ['created_at' => $createdAt, 'customer_id' => $customerId]);
+
+            // Insert payment record
+            $paymentRecord = new financerecordsModel();
+            $paymentRecord->type = 'payment'; // Set the type
+            $paymentRecord->recordable_id = $payment->id;
+            $paymentRecord->recordable_type = paymentModel::class;
+            $paymentRecord->amount = $validatedData['amount'];
+            $paymentRecord->payment_method = $validatedData['payment_method'];
+            $paymentRecord->transaction_id = $validatedData['transaction_id'];
+            $paymentRecord->comment = $validatedData['comment'];
+            $paymentRecord->customer_id = $customerId;
+            $paymentRecord->save();
+
             // Find the customer subscription
             $subscription = CustomerSubscriptionModel::where('customer_id', $customerId)->first();
             $customer = CustomerModel::where('id', $customerId)->first();
+            $unpaidInvoices = InvoiceModel::where('customer_id', $customer->id)
+                ->whereIn('status', ['unpaid', 'partially paid', 'overdue'])
+                ->count();
 
+            $Amount = $validatedData['amount'];
+
+            // Partially pay invoices
+            $unpaidInvoices = InvoiceModel::where('customer_id', $customer->id)
+                ->whereIn('status', ['unpaid', 'partially paid', 'overdue'])
+                ->orderBy('created_at', 'asc')
+                ->get();
+
+            // loop through the invoices distributing the payment
+            foreach ($unpaidInvoices as $invoice) {
+                if ($Amount >= abs($invoice->due_amount)) {
+                    $invoice->status = 'paid';
+                    $invoice->due_amount = 0;
+                    $invoice->save();
+                    $Amount -= $invoice->amount;
+                } elseif ($Amount > 0) {
+                    $invoice->status = 'partially paid';
+                    $invoice->due_amount = $Amount - $invoice->amount;
+                    $invoice->save();
+                    $Amount = 0;
+                } else {
+                    break;
+                }
+            }
+
+            // update the customer's balance
+            $customer->account_balance += $validatedData['amount'];
+            $customer->save();
+            // dd($customer->status === 'blocked');
             // Update the customer status if the amount is correct
-            if ($customer && $subscription) {
-                if ((int)$validatedData['amount'] >= $subscription->service_price) {
+            if ($customer && $subscription && $subscription->invoiced_till && $subscription->invoiced_till < now() && $customer->status === 'blocked') {
+                if ($customer->account_balance >= $subscription->service_price) {
                     $customer->status = 'active';
                     $customer->save();
 
-                    // $radreply1 = new radreply();
-                    // $radreply1->username = $request->pppoe_login;
-                    // $radreply1->attribute = 'Address-List';
-                    // $radreply1->op = ':=';
-                    // $radreply1->value = 'active';
-                    // $radreply1->customer_subscription_id = $subscription->id;
-                    // $radreply1->save();
-
+                    $radcheck = radcheck::updateOrCreate(
+                        [
+                            'username' => $subscription->pppoe_login,
+                            'attribute' => 'User-Profile',
+                        ],
+                        [
+                            'op' => ':=',
+                            'value' => $subscription->service,
+                            'customer_subscription_id' => $subscription->id,
+                        ]
+                    );
                     // Calculate the invoiced_till date
                     $service = PPPoEService::where('service_name', $subscription->service)->first();
                     $duration = $service->service_duration;
@@ -78,12 +126,35 @@ class PaymentController extends Controller
 
                     // Calculate half of the duration in minutes
                     $halfDurationInMinutes = $this->calculateHalfDuration($duration, $unit);
-
                     // Calculate the due date
                     $dueDate = Carbon::now()->addMinutes($halfDurationInMinutes);
-
+                    // Generate an invoice number with a timestamp
+                    $invoiceNumber = now()->format('YmdHis') . '-' . $customerId;
                     // Create a new invoice record
-                    $invoice = InvoiceModel::create($validatedData + ['type' => 'one time invoice', 'due_date' => $dueDate, 'status' => 'paid', 'created_at' => $createdAt, 'customer_id' => $customerId]);
+                    $invoice = InvoiceModel::create([
+                        'invoice_number' => $invoiceNumber,
+                        'customer_id' => $customerId,
+                        'due_date' => $dueDate,
+                        'amount' => $validatedData['amount'],
+                        'due_amount' => 0,
+                        'status' => 'paid',
+                        'type' => 'one time invoice',
+                        'created_at' => $createdAt
+                    ]);
+
+                    // Insert invoice record
+                    $invoiceRecord = new financerecordsModel();
+                    $invoiceRecord->type = 'invoice'; // Set the type
+                    $invoiceRecord->recordable_id = $invoice->id;
+                    $invoiceRecord->recordable_type = InvoiceModel::class;
+                    $invoiceRecord->amount = $validatedData['amount'];
+                    $invoiceRecord->comment = $validatedData['comment'];
+                    $invoiceRecord->customer_id = $customerId;
+                    $invoiceRecord->transaction_id = $invoiceNumber;
+                    $invoiceRecord->save();
+
+                    $customer->account_balance -= $subscription->service_price;
+                    $customer->save();
                 }
             }
 
@@ -93,7 +164,7 @@ class PaymentController extends Controller
         } catch (\Throwable $th) {
             DB::rollBack();
             dd($th);
-            // return response()->json(['error' => $th], 500);
+            // return redirect()->back()->with('error', 'An error occurred: ' . $th->getMessage());
         }
     }
 

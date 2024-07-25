@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CustomerModel;
 use App\Models\CustomerSubscriptionModel;
+use App\Models\financerecordsModel;
 use App\Models\InvoiceModel;
 use App\Models\IPAddressesModel;
 use App\Models\paymentModel;
@@ -13,6 +14,7 @@ use App\Models\PPPoEService;
 use App\Models\radreply;
 use App\Models\radusergroup;
 use App\Models\RouterCredential;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -111,13 +113,16 @@ class CustomerController extends Controller
         $ippools = PoolModel::all();
         $subscriptions = CustomerSubscriptionModel::where('customer_id', $customer->id)->get();
 
-        $invoices = InvoiceModel::where('customer_id', $customer->id)->get();
+        // $invoices = InvoiceModel::where('customer_id', $customer->id)->get();
 
-        $payments = paymentModel::where('customer_id', $customer->id)->get();
+        // $payments = paymentModel::where('customer_id', $customer->id)->get();
+
         // foreach ($invoices as $invoice) {
         //     $invoice->payments = $payment;
         // }
 
+        // Fetch records with related invoices
+        $records = financerecordsModel::with('recordable')->orderBy('id', 'asc')->get();
         // Initialize an array to hold the pools and their IPs
         $poolsWithIps = [];
 
@@ -136,7 +141,7 @@ class CustomerController extends Controller
         }
         $routers=RouterCredential::all();
 
-        return view('customer.edit', compact('customer', 'pppoeprofiles', 'subscriptions', 'ipaddress', 'ippools', 'poolsWithIps', 'invoices', 'payments', 'routers'));
+        return view('customer.edit', compact('customer', 'pppoeprofiles', 'subscriptions', 'ipaddress', 'ippools', 'poolsWithIps', 'routers', 'records'));
     }
 
     /**

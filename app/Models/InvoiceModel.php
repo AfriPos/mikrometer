@@ -13,11 +13,19 @@ class InvoiceModel extends Model
         'customer_id',
         'amount',
         'due_date',
+        'due_amount',
+        'invoice_number',
         'status',
         'type',
     ];
+
     public function customer()
     {
         return $this->belongsTo(CustomerModel::class);
+    }
+
+    public function records()
+    {
+        return $this->morphMany('App\Models\financerecordsModel', 'recordable');
     }
 }

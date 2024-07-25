@@ -15,7 +15,8 @@ class SSEController extends Controller
     {
         // Extract query parameters
         $subscriptionId = $request->query('subscription_id');
-        $subscription = CustomerSubscriptionModel::where('id', $subscriptionId)->first();
+        $subscription = CustomerSubscriptionModel::where('pppoe_login', $subscriptionId)->first();
+        // dd($subscriptionId);
         $nas = RouterCredential::where('id', $subscription->nas_id)->first();
         $routerApi = new RouterosAPI();
         $routerIp = $nas->nasname; // Replace with your RouterOS IP address
@@ -61,7 +62,7 @@ class SSEController extends Controller
         // $bandwidthData = $routerApi->read();
         if (!empty($response)) {
             return [
-                // 'response' => $response[0]['rx-bits-per-second']
+                // 'response' => $response
                 'timestamp' => now()->timestamp,
                 'rxRate' => $response[0]['rx-bits-per-second'] ?? 0,
                 'txRate' => $response[0]['tx-bits-per-second'] ?? 0,

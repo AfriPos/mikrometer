@@ -12,6 +12,7 @@ export default defineConfig({
                 'resources/css/soft-ui-dashboard.min.css',
 
                 'resources/js/app.js',
+                'resources/js/customer.js',
                 'resources/js/custom.js',
                 'resources/js/bootstrap-notify.js',
                 'resources/js/bootstrap.js',

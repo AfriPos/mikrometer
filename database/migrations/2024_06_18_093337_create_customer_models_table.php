@@ -30,6 +30,7 @@ return new class extends Migration
             $table->string('zip_code')->nullable();
             $table->string('city')->nullable();
             $table->string('geo_data')->nullable();
+            $table->integer('account_balance')->default(0);
             $table->timestamps();
         });
 

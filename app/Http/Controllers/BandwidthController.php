@@ -1,63 +1,80 @@
 <?php
+
 namespace App\Http\Controllers;
 
+use App\Models\dataUsage;
 use App\Models\radacct;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class BandwidthController extends Controller
 {
-    public function getAverageBandwidth($username)
+    public function getAverageBandwidth(Request $request)
     {
-        $hourly = DB::select("
-            SELECT DATE_FORMAT(AcctStartTime, '%Y-%m-%d %H:00:00') AS hour,
-            SUM(IF(AcctStopTime IS NULL, TIMESTAMPDIFF(SECOND, AcctStartTime, NOW()), AcctSessionTime) * AcctInputOctets / AcctSessionTime) / 3600 AS average_download,
-            SUM(IF(AcctStopTime IS NULL, TIMESTAMPDIFF(SECOND, AcctStartTime, NOW()), AcctSessionTime) * AcctOutputOctets / AcctSessionTime) / 3600 AS average_upload
-            FROM radacct
-            WHERE UserName = ?
-            GROUP BY hour
-            ORDER BY hour DESC
-        ", [$username]);
+        $username = $request->query('username');
+        $startYear = Carbon::createFromDate($request->query('start_year'))->startOfYear();
+        $endYear = Carbon::createFromDate($request->query('end_year'))->endOfYear();
 
-        $daily = DB::select("
-            SELECT DATE_FORMAT(AcctStartTime, '%Y-%m-%d') AS day,
-            SUM(IF(AcctStopTime IS NULL, TIMESTAMPDIFF(SECOND, AcctStartTime, NOW()), AcctSessionTime) * AcctInputOctets / AcctSessionTime) / 86400 AS average_download,
-            SUM(IF(AcctStopTime IS NULL, TIMESTAMPDIFF(SECOND, AcctStartTime, NOW()), AcctSessionTime) * AcctOutputOctets / AcctSessionTime) / 86400 AS average_upload
-            FROM radacct
-            WHERE UserName = ?
-            GROUP BY day
-            ORDER BY day DESC
-        ", [$username]);
+        $hourly = dataUsage::where('username', $username)
+            ->whereBetween('period_start', [$startYear, $endYear])
+            ->whereRaw('TIMESTAMPDIFF(SECOND, period_start, period_end) > 0') // Ensure period is valid
+            ->selectRaw("DATE_FORMAT(period_start, '%Y-%m-%d %H:00:00') AS hour, 
+                AVG(acctinputoctets / TIMESTAMPDIFF(SECOND, period_start, period_end)) AS average_upload, 
+                AVG(acctoutputoctets / TIMESTAMPDIFF(SECOND, period_start, period_end)) AS average_download")
+            ->groupBy(DB::raw("DATE_FORMAT(period_start, '%Y-%m-%d %H:00:00')"))
+            ->orderBy('hour', 'DESC')
+            ->having('average_upload', '>=', 0)
+            ->having('average_download', '>=', 0)
+            ->get();
 
-        $weekly = DB::select("
-            SELECT DATE_FORMAT(AcctStartTime, '%Y-%u') AS week,
-            SUM(IF(AcctStopTime IS NULL, TIMESTAMPDIFF(SECOND, AcctStartTime, NOW()), AcctSessionTime) * AcctInputOctets / AcctSessionTime) / (86400 * 7) AS average_download,
-            SUM(IF(AcctStopTime IS NULL, TIMESTAMPDIFF(SECOND, AcctStartTime, NOW()), AcctSessionTime) * AcctOutputOctets / AcctSessionTime) / (86400 * 7) AS average_upload
-            FROM radacct
-            WHERE UserName = ?
-            GROUP BY week
-            ORDER BY week DESC
-        ", [$username]);
+        $daily = dataUsage::where('username', $username)
+            ->whereBetween('period_start', [$startYear, $endYear])
+            ->whereRaw('TIMESTAMPDIFF(SECOND, period_start, period_end) > 0') // Ensure period is valid
+            ->selectRaw("DATE(period_start) AS day, 
+                AVG(acctinputoctets / TIMESTAMPDIFF(SECOND, period_start, period_end)) AS average_upload, 
+                AVG(acctoutputoctets / TIMESTAMPDIFF(SECOND, period_start, period_end)) AS average_download")
+            ->groupBy(DB::raw("DATE(period_start)"))
+            ->orderBy('day', 'DESC')
+            ->having('average_upload', '>=', 0)
+            ->having('average_download', '>=', 0)
+            ->get();
 
-        $monthly = DB::select("
-            SELECT DATE_FORMAT(AcctStartTime, '%Y-%m') AS month,
-            SUM(IF(AcctStopTime IS NULL, TIMESTAMPDIFF(SECOND, AcctStartTime, NOW()), AcctSessionTime) * AcctInputOctets / AcctSessionTime) / (86400 * 30) AS average_download,
-            SUM(IF(AcctStopTime IS NULL, TIMESTAMPDIFF(SECOND, AcctStartTime, NOW()), AcctSessionTime) * AcctOutputOctets / AcctSessionTime) / (86400 * 30) AS average_upload
-            FROM radacct
-            WHERE UserName = ?
-            GROUP BY month
-            ORDER BY month DESC
-        ", [$username]);
+        $weekly = dataUsage::where('username', $username)
+            ->whereBetween('period_start', [$startYear, $endYear])
+            ->whereRaw('TIMESTAMPDIFF(SECOND, period_start, period_end) > 0') // Ensure period is valid
+            ->selectRaw("DATE_FORMAT(period_start, '%Y-%u') AS week, 
+                AVG(acctinputoctets / TIMESTAMPDIFF(SECOND, period_start, period_end)) AS average_upload, 
+                AVG(acctoutputoctets / TIMESTAMPDIFF(SECOND, period_start, period_end)) AS average_download")
+            ->groupBy(DB::raw("DATE_FORMAT(period_start, '%Y-%u')"))
+            ->orderBy('week', 'DESC')
+            ->having('average_upload', '>=', 0)
+            ->having('average_download', '>=', 0)
+            ->get();
 
-        $yearly = DB::select("
-            SELECT DATE_FORMAT(AcctStartTime, '%Y') AS year,
-            SUM(IF(AcctStopTime IS NULL, TIMESTAMPDIFF(SECOND, AcctStartTime, NOW()), AcctSessionTime) * AcctInputOctets / AcctSessionTime) / (86400 * 365) AS average_download,
-            SUM(IF(AcctStopTime IS NULL, TIMESTAMPDIFF(SECOND, AcctStartTime, NOW()), AcctSessionTime) * AcctOutputOctets / AcctSessionTime) / (86400 * 365) AS average_upload
-            FROM radacct
-            WHERE UserName = ?
-            GROUP BY year
-            ORDER BY year DESC
-        ", [$username]);
+        $monthly = dataUsage::where('username', $username)
+            ->whereBetween('period_start', [$startYear, $endYear])
+            ->whereRaw('TIMESTAMPDIFF(SECOND, period_start, period_end) > 0') // Ensure period is valid
+            ->selectRaw("DATE_FORMAT(period_start, '%Y-%m') AS month, 
+                AVG(acctinputoctets / TIMESTAMPDIFF(SECOND, period_start, period_end)) AS average_upload, 
+                AVG(acctoutputoctets / TIMESTAMPDIFF(SECOND, period_start, period_end)) AS average_download")
+            ->groupBy(DB::raw("DATE_FORMAT(period_start, '%Y-%m')"))
+            ->orderBy('month', 'DESC')
+            ->having('average_upload', '>=', 0)
+            ->having('average_download', '>=', 0)
+            ->get();
+
+        $yearly = dataUsage::where('username', $username)
+            ->whereBetween('period_start', [$startYear, $endYear])
+            ->whereRaw('TIMESTAMPDIFF(SECOND, period_start, period_end) > 0') // Ensure period is valid
+            ->selectRaw("YEAR(period_start) AS year, 
+                AVG(acctinputoctets / TIMESTAMPDIFF(SECOND, period_start, period_end)) AS average_upload, 
+                AVG(acctoutputoctets / TIMESTAMPDIFF(SECOND, period_start, period_end)) AS average_download")
+            ->groupBy(DB::raw("YEAR(period_start)"))
+            ->orderBy('year', 'DESC')
+            ->having('average_upload', '>=', 0)
+            ->having('average_download', '>=', 0)
+            ->get();
 
         return response()->json([
             'hourly' => $hourly,
@@ -70,21 +87,18 @@ class BandwidthController extends Controller
 
     public function getTotalDailyBandwidth(Request $request)
     {
-        $startDate = $request->query('start_date');
-        $endDate = $request->query('end_date');
+        $startDate = Carbon::parse($request->query('start_date'));
+        $endDate = Carbon::parse($request->query('end_date'));
         $username = $request->query('username');
 
-        $dailyBandwidth = DB::table('radacct')
-            ->where('username', $username)
-            ->whereBetween('acctstarttime', [$startDate, $endDate])
-            ->selectRaw('DATE(acctstarttime) as date, 
-                         SUM(IFNULL(acctinputoctets, 0)) as total_download, 
-                         SUM(IFNULL(acctoutputoctets, 0)) as total_upload,
-                         SUM(IFNULL(acctinputoctets, 0) + IFNULL(acctoutputoctets, 0)) as total_bandwidth')
+        $data = dataUsage::where('username', $username)
+            ->whereDate('period_start', '>=', $startDate->startOfDay())
+            ->whereDate('period_start', '<=', $endDate->endOfDay())
+            ->selectRaw('DATE(period_start) as date, SUM(acctinputoctets) as total_upload, SUM(acctoutputoctets) as total_download')
             ->groupBy('date')
             ->orderBy('date')
             ->get();
 
-        return response()->json($dailyBandwidth);
+        return $data;
     }
 }
