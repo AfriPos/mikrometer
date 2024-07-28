@@ -11,6 +11,7 @@ use App\Http\Controllers\PPPoEServiceController;
 use App\Http\Controllers\RouterController;
 use App\Http\Controllers\CustomerSubscriptionController;
 use App\Http\Controllers\dashboardController;
+use App\Http\Controllers\hotspotController;
 use App\Http\Controllers\invoiceController;
 use App\Http\Controllers\locationsController;
 use App\Http\Controllers\PaymentController;
@@ -23,16 +24,24 @@ Route::get('/', function () {
     return redirect('/portal');
 });
 
+
+Route::get('bundles', [hotspotController::class, 'bundles'])->name('hotspot.bundles');
+Route::post('/purchase', [hotspotController::class, 'purchase'])->name('purchase');
+Route::get('/hotspot/redirect', [HotspotController::class, 'redirect'])->name('hotspot.redirect');
+
+
+
+Route::get('/hlogin', function () {
+    return view('hotspot.login');
+})->name('hlogin');
 // Route::get('/admin/dashboard', function () {
 //     return view('dashboard');
 // })->middleware(['auth', 'verified'])->name('dashboard');
 
 // Customer Authentication
-Route::get('customer/login', [CustomerLoginController::class, 'create'])
-    ->name('customer.login');
+Route::get('customer/login', [CustomerLoginController::class, 'create'])->name('customer.login');
 Route::post('customer/login', [CustomerLoginController::class, 'store']);
-Route::post('customer/logout', [CustomerLoginController::class, 'destroy'])
-    ->name('customer.logout');
+Route::post('customer/logout', [CustomerLoginController::class, 'destroy'])->name('customer.logout');
 
 
 Route::middleware(['auth:customer'])->group(function () {
@@ -71,6 +80,15 @@ Route::middleware('auth')->group(function () {
     Route::put('/admin/pppoe/{id}', [PPPoEServiceController::class, 'update'])->name('pppoe.update');
     Route::delete('/admin/pppoe/{id}', [PPPoEServiceController::class, 'destroy'])->name('pppoe.destroy');
     Route::post('/fetch-service', [PPPoEServiceController::class, 'show'])->name('pppoe.show');
+
+    // Hotspot
+    Route::get('/admin/hotspot', [hotspotController::class, 'index'])->name('hotspot.index');
+    Route::get('/admin/hotspot/create', [hotspotController::class, 'create'])->name('hotspot.create');
+    Route::post('/admin/hotspot', [hotspotController::class, 'store'])->name('hotspot.store');
+    Route::get('/admin/hotspot/{id}', [hotspotController::class, 'show'])->name('hotspot.show');
+    Route::get('/admin/hotspot/{id}/edit', [hotspotController::class, 'edit'])->name('hotspot.edit');
+    Route::put('/admin/hotspot/{id}', [hotspotController::class, 'update'])->name('hotspot.update');
+    Route::delete('/admin/hotspot/{id}', [hotspotController::class, 'destroy'])->name('hotspot.destroy');
 
     // Customers
     Route::get('/admin/customers', [CustomerController::class, 'index'])->name('customer.index');
@@ -121,7 +139,7 @@ Route::middleware('auth')->group(function () {
 
     // administration
     Route::get('/admin/administration', [AdminController::class, 'show'])->name('admin.show');
-    Route::get('/ping', 'App\Http\Controllers\RouterController@pingInitialize'); 
+    Route::get('/ping', 'App\Http\Controllers\RouterController@pingInitialize');
     Route::post('/admin/active-session', [radacctController::class, 'show'])->name('radacct.show');
     Route::get('/admin/data-totals/{username}/{startDate}/{endDate}', [radacctController::class, 'getDataTotals'])->name('radacct.getDataTotals');
     Route::get('/admin/ended-sessions/{username}', [radacctController::class, 'showEndedSessions'])->name('radacct.ended-sessions');
@@ -156,7 +174,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/locations/{location}/edit', [locationsController::class, 'edit'])->name('locations.edit');
     Route::put('/admin/locations/{location}', [locationsController::class, 'update'])->name('locations.update');
     Route::delete('/admin/locations/{location}', [locationsController::class, 'destroy'])->name('locations.destroy');
-
 });
 
 require __DIR__ . '/auth.php';

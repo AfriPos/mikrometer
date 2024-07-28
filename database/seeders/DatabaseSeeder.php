@@ -32,39 +32,13 @@ class DatabaseSeeder extends Seeder
             'value' => 'MM-blocked-list'
         ]);
 
-        // radgroupreply::create([
-        //     'groupname' => 'paused',
-        //     'attribute' => 'Mikrotik-Address-List',
-        //     'op' => '=',
-        //     'value' => 'MM-blocked-list'
-        // ]);
-
-        // radgroupreply::create([
-        //     'groupname' => 'active',
-        //     'attribute' => 'Mikrotik-Address-List',
-        //     'op' => '=',
-        //     'value' => 'MM-allowed-list'
-        // ]);
-
-
-        // usergroup seeders
-        // radusergroup::created([
-        //     'username' => 'paused',
-        //     'groupname' => 'paused',
-        //     'priority' => '1'
-        // ]);
-
         radusergroup::created([
             'username' => 'disabled',
             'groupname' => 'disabled',
             'priority' => '1'
         ]);
+        
 
-        // radusergroup::created([
-        //     'username' => 'active',
-        //     'groupname' => 'active',
-        //     'priority' => '1'
-        // ]);
         
 
 
