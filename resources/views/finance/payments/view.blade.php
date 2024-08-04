@@ -1,5 +1,5 @@
 <!-- Create service Modal -->
-<div class="modal fade" id="viewpayment{{ $payment->id }}" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="viewpayment{{ $record->recordable->id }}" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -10,23 +10,23 @@
             <div class="modal-body">
                 <div class="row">
                     <div class="col-3">Customer:</div>
-                    <div class="col-3">{{ $payment->customer->name }}</div>
+                    <div class="col-3">{{ $record->recordable->customer->name }}</div>
                     <div class="col-3">Invoice number:</div>
-                    <div class="col-3">{{ $payment->invoice_id }}</div>
+                    <div class="col-3">{{ $record->recordable->invoice_id }}</div>
                 </div>
                 <div class="row">
                     <div class="col-3">Payment type:</div>
-                    <div class="col-3">{{ $payment->payment_method }}</div>
+                    <div class="col-3">{{ $record->recordable->payment_method }}</div>
                     <div class="col-3">Sum:</div>
-                    <div class="col-3">{{ $payment->amount }}</div>
+                    <div class="col-3">{{ $record->recordable->amount }}</div>
                 </div>
                 <div class="row">
                     <div class="col-3">Transaction ID:</div>
                     <div class="col-3">2</div>
                     <div class="col-3">Transaction time:</div>
-                    <div class="col-3">{{ $payment->created_at }}</div>
+                    <div class="col-3">{{ $record->recordable->created_at }}</div>
                     <div class="col-3">Receipt Number:</div>
-                    <div class="col-3">{{ $payment->transaction_id }}</div>
+                    <div class="col-3">{{ $record->recordable->transaction_id }}</div>
                 </div>
             </div>
             <div class="modal-footer">

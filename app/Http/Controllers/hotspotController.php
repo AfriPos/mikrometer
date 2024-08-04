@@ -32,7 +32,7 @@ class hotspotController extends Controller
 
         try {
             $validatedData = $request->validate([
-                'plan_name' => 'required|string|max:255',
+                'plan_name' => 'required|string|max:191',
                 'plan_price' => 'required|numeric|min:0',
                 'data_limit' => 'required|numeric|min:0',
                 'data_limit_unit' => 'required|in:MB,GB',

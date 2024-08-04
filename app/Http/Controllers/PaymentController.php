@@ -18,6 +18,14 @@ use Illuminate\Support\Facades\DB;
 class PaymentController extends Controller
 {
 
+    public function generatePDF($id)
+    {
+        // Fetch a single record with related invoice using recordable_id
+        $payment = financerecordsModel::with('recordable')->where('recordable_id', $id)->first();
+        return view('finance.payments.pdf', compact('payment'));
+    }
+
+
     public function index()
     {
         $payments = paymentModel::all();
@@ -59,7 +67,6 @@ class PaymentController extends Controller
             $paymentRecord->transaction_id = $validatedData['transaction_id'];
             $paymentRecord->comment = $validatedData['comment'];
             $paymentRecord->customer_id = $customerId;
-            $paymentRecord->save();
 
             // Find the customer subscription
             $subscription = CustomerSubscriptionModel::where('customer_id', $customerId)->first();
@@ -96,12 +103,15 @@ class PaymentController extends Controller
             // update the customer's balance
             $customer->account_balance += $validatedData['amount'];
             $customer->save();
-            // dd($customer->status === 'blocked');
+            // dd($subscription->invoiced_till && $subscription->invoiced_till < now() && $customer->status === 'blocked');
             // Update the customer status if the amount is correct
-            if ($customer && $subscription && $subscription->invoiced_till && $subscription->invoiced_till < now() && $customer->status === 'blocked') {
+            if ($customer && $subscription && $subscription->invoiced_till < now() && $customer->status === 'blocked') {
                 if ($customer->account_balance >= $subscription->service_price) {
                     $customer->status = 'active';
                     $customer->save();
+
+
+                    $recordablegroup_id = substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 4);
 
                     $radcheck = radcheck::updateOrCreate(
                         [
@@ -151,12 +161,17 @@ class PaymentController extends Controller
                     $invoiceRecord->comment = $validatedData['comment'];
                     $invoiceRecord->customer_id = $customerId;
                     $invoiceRecord->transaction_id = $invoiceNumber;
+
+                    $paymentRecord->recordablegroup_id = $recordablegroup_id;
+                    $invoiceRecord->recordablegroup_id = $recordablegroup_id;
+
                     $invoiceRecord->save();
 
                     $customer->account_balance -= $subscription->service_price;
                     $customer->save();
                 }
             }
+            $paymentRecord->save();
 
             DB::commit();
 
@@ -193,6 +208,33 @@ class PaymentController extends Controller
         }
     }
 
+    public function destroy(financerecordsModel $payment)
+    {
+        try {
+            DB::beginTransaction();
+            $customer = CustomerModel::where('id', $payment->customer_id)->first();
+            $recordable = $payment->recordable;
+
+            // update the customer's balance
+            $customer->account_balance -= $payment->amount;
+            $customer->save();
+            dump($customer);
+
+            // if ($recordable) {
+            //     $recordable->delete();
+            // }
+
+            // $payment->delete();
+
+            // return response()->json(['message' => 'Finance record and its recordable deleted successfully']);
+            // DB::commit();
+            // return redirect()->back()->with('success', 'Payment updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to update payment: ' . $e->getMessage());
+        }
+    }
+
     public function dispatch()
     {
         // Somewhere in your application, such as a controller method or a command
@@ -216,55 +258,3 @@ class PaymentController extends Controller
         }
     }
 }
-
-
-
-
-// // Find the customer subscription
-// $subscription = CustomerSubscriptionModel::where('pppoe_login', $customer->id)->first();
-
-// if ($subscription) {
-//     // Update the end date and status
-//     $subscription->end_date = now()->addMonth(); // Example: extend for 1 month from now
-//     $subscription->status = 'active';
-//     $subscription->save();
-// }
-
-// // return response()->json([
-// //     'success' => true,
-// //     'message' => $subscription
-// // ]);
-
-// // Create an instance of the RouterosAPI class
-// $api = new RouterosAPI();
-// // fetch router login credentials
-// $routerCredential = RouterCredential::first();
-// // Connect to the RouterOS
-// if ($api->connect($routerCredential['ip_address'], $routerCredential['login'], $routerCredential['password'])) {
-//     // Check if the secret already exists
-//     $existingSecret = $api->comm("/ppp/secret/print", [
-//         ".proplist" => ".id",
-//         "?name" => $subscription->pppoe_login,
-//     ]);
-
-//     if (!empty($existingSecret)) {
-//         // Enable existing secret
-//         $api->comm("/ppp/secret/enable", [
-//             ".id" => $existingSecret[0]['.id']
-//         ]);
-//     } else {
-//         // Add new secret
-//         $api->comm("/ppp/secret/add", [
-//             "name" => $subscription->pppoe_login,
-//             "password" => $subscription->pppoe_password,
-//             "profile" => $subscription->profile_name,
-//             "service" => "pppoe", // Set service to pppoe
-//             "comment" => $customer->email . " | " . $customer->phone, // Add customer email and phone as comment
-//         ]);
-//     }
-
-//     $api->disconnect();
-// } else {
-//     // Handle connection failure
-//     return response()->json(['error' => 'Failed to connect to the router.'], 400);
-// }

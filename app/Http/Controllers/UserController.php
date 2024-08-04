@@ -34,14 +34,14 @@ class UserController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'name' => 'required|string|max:255',
+                'name' => 'required|string|max:191',
                 'email' => 'required|string|email|max:255|unique:users',
             ]);
-            
+
             // $password = \Illuminate\Support\Str::random(8) . rand(10, 99);
             $password = 'password@123';
             $validatedData['password'] = Hash::make($password);
-            
+
             $user = User::create($validatedData);
             $role = Role::where('name', $request->role)->first();
             $user->assignRole($role);
@@ -76,12 +76,12 @@ class UserController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'name' => 'required|string|max:255',
+                'name' => 'required|string|max:191',
                 'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             ]);
-            
+
             $user->update($validatedData);
-            
+
             $role = Role::where('name', $request->role)->first();
             $user->syncRoles([$role]);
 
@@ -89,7 +89,6 @@ class UserController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'An error occurred while updating the user: ' . $e->getMessage());
         }
-
     }
 
     /**

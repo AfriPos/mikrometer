@@ -61,6 +61,7 @@ return new class extends Migration
             $table->id();
             $table->string('type'); // This can be 'invoice', 'payment', 'credit_note', 'future_item'
             $table->morphs('recordable'); // This will create `recordable_id` and `recordable_type`
+            $table->string('recordablegroup_id')->nullable()->default(null);
             $table->decimal('amount', 8, 2)->nullable();
             $table->string('payment_method')->nullable();
             $table->string('transaction_id')->nullable();

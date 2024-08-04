@@ -43,11 +43,11 @@ class CustomerSubscriptionController extends Controller
         try {
             // Validate form data
             $request->validate([
-                'service' => 'required|string|max:255',
-                'ipaddress' => 'required|string|max:255',
-                'pppoe_login' => 'required|string|max:255',
-                'pppoe_password' => 'required|string|max:255',
-                'service_price' => 'required|integer',
+                'service' => 'required|string|max:191',
+                'ipaddress' => 'required|string|max:191',
+                'pppoe_login' => 'required|string|max:128',
+                'pppoe_password' => 'required|string|max:128',
+                'service_price' => 'required|integer|min:1',
                 'nas_id' => 'required|integer',
             ]);
 
@@ -155,11 +155,11 @@ class CustomerSubscriptionController extends Controller
          try {
              // Validate form data
              $validatedData = $request->validate([
-                 'status' => 'required|string|max:255',
-                 'ipaddress' => 'required|string|ip|max:255',
-                 'pppoe_login' => 'required|string|max:255',
-                 'pppoe_password' => 'required|string|max:255',
-                 'service_price' => 'required|integer',
+                 'status' => 'required|string|max:191',
+                 'ipaddress' => 'required|string|ip|max:191',
+                 'pppoe_login' => 'required|string|max:128',
+                 'pppoe_password' => 'required|string|max:128',
+                 'service_price' => 'required|integer|min:1',
                  'nas_id' => 'required|integer',
              ]);
  

@@ -16,8 +16,8 @@
                             onchange="logSelectedOption(this)">
                             <option value="">Select Service</option>
                             @foreach ($pppoeprofiles as $pppoeprofile)
-                                <option value="{{ $pppoeprofile->username }}" {{-- @if ($customer->pppoeprofile_id == $pppoeprofile->id) selected @endif --}}>
-                                    {{ $pppoeprofile->username }}
+                                <option value="{{ $pppoeprofile->service_name }}" {{-- @if ($customer->pppoeprofile_id == $pppoeprofile->id) selected @endif --}}>
+                                    {{ $pppoeprofile->service_name }}
                                 </option>
                             @endforeach
                         </select>
@@ -36,10 +36,9 @@
                             </optgroup>
                         @endforeach
                     </select>
-
                     <div class="form-floating mb-3 d-flex">
-                        <input type="number service_price" data-identifier="service-price-input" id="service_price"
-                            name="service_price" class="form-control" placeholder="">
+                        <input type="number" data-identifier="service-price-input" id="service_price"
+                            name="service_price" class="form-control" placeholder="" min="1">
                         <label for="service_price">Service Price</label>
                     </div>
                     <div class="form-floating mb-3 d-flex">

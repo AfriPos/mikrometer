@@ -60,8 +60,8 @@
                     <div class="form-floating mb-3 d-flex">
                         <input type="number" id="service_price" name="service_price"
                             class="edit_service_price form-control" placeholder=""
-                            value="{{ $subscription->service_price }}">
-                        <label for="service_price">Service
+                            value="{{ $subscription->service_price }}" min="1"> <label
+                            for="service_price">Service
                             Price</label>
                     </div>
                     <div class="form-floating mb-3 d-flex">

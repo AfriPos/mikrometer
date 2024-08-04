@@ -11,6 +11,19 @@ use Illuminate\Support\Facades\DB;
 
 class invoiceController extends Controller
 {
+    public function generatePDF($id)
+    {
+        // Fetch a single record with related invoice using recordable_id
+        $invoice = financerecordsModel::with('recordable')->where('recordable_id', $id)->first();
+        $payments = financerecordsModel::with('recordable')
+            ->where('recordablegroup_id', $invoice['recordablegroup_id'])
+            ->where('type', 'payment')
+            ->whereNotNull('recordablegroup_id')
+            ->get();
+
+        return view('finance.invoices.pdf', compact('invoice', 'payments'));
+    }
+
     public function store(Request $request, $customerId)
     {
         try {
@@ -29,7 +42,7 @@ class invoiceController extends Controller
                 $dueamount = $validatedData['amount'];
                 $status = 'paid';
             } elseif ($customer->account_balance < $validatedData['amount'] && $customer->account_balance > 0) {
-                $dueamount = -($validatedData['amount'] - $customer->account_balance);
+                $dueamount = - ($validatedData['amount'] - $customer->account_balance);
                 $status = 'partially paid';
             } else {
                 $dueamount = -$validatedData['amount'];
@@ -37,7 +50,7 @@ class invoiceController extends Controller
             }
             $customer->account_balance -= $validatedData['amount'];
             $customer->save();
-            
+
             // Create a new invoice record
             $invoice = InvoiceModel::create([
                 'invoice_number' => $validatedData['invoice_number'],

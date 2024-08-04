@@ -34,7 +34,7 @@ class RoleController extends Controller
     {
         // Validate the incoming data
         $request->validate([
-            'name' => 'required|string|max:255|unique:roles,name',
+            'name' => 'required|string|max:191|unique:roles,name',
         ]);
 
         try {
@@ -80,7 +80,7 @@ class RoleController extends Controller
     {
         // Validate the incoming data
         $request->validate([
-            'name' => 'required|string|max:255|unique:roles,name,' . $role->id,
+            'name' => 'required|string|max:191|unique:roles,name,' . $role->id,
             // Other fields to validate
         ]);
 

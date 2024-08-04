@@ -113,7 +113,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/payment/{customer}', [PaymentController::class, 'store'])->name('payment.store');
     Route::get('/admin/payment/{payment}/edit', [PaymentController::class, 'edit'])->name('payment.edit');
     Route::put('/admin/payment/{payment}', [PaymentController::class, 'update'])->name('payment.update');
+    Route::delete('/admin/payment/{payment}', [PaymentController::class, 'destroy'])->name('payment.destroy');
     Route::get('/admin/dispatch', [PaymentController::class, 'dispatch'])->name('payment.dispatch');
+    Route::get('payment/pdf/{id}', [PaymentController::class, 'generatePDF'])->name('payment.pdf');
 
     // Invoice
     Route::get('/admin/invoices', [invoiceController::class, 'index'])->name('invoice.index');
@@ -123,6 +125,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/invoice/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoice.edit');
     Route::put('/admin/invoice/{invoice}', [InvoiceController::class, 'update'])->name('invoice.update');
     Route::delete('/admin/invoice/{invoice}', [InvoiceController::class, 'destroy'])->name('invoice.destroy');
+    Route::get('invoice/pdf/{id}', [InvoiceController::class, 'generatePDF'])->name('invoice.pdf');
+
 
 
     // others

@@ -49,21 +49,21 @@ class CustomerController extends Controller
 
             // Validate the incoming request data
             $validatedData = $request->validate([
-                'portal_login' => 'nullable|string|max:255',
-                'portal_password' => 'nullable|string|max:255',
-                'name' => 'required|string|max:255',
+                'portal_login' => 'nullable|string|max:191',
+                'portal_password' => 'nullable|string|max:191',
+                'name' => 'required|string|max:191',
                 'email' => 'required|email|unique:customers,email,',
                 'phone' => 'required|string|max:20',
                 'service_type' => 'nullable|in:recurring,prepaid',
                 'billing_email' => 'nullable|email',
-                'street' => 'nullable|string|max:255',
+                'street' => 'nullable|string|max:191',
                 'zip_code' => 'nullable|string|max:20',
-                'city' => 'nullable|string|max:255',
-                'geo_data' => 'nullable|string|max:255',
+                'city' => 'nullable|string|max:191',
+                'geo_data' => 'nullable|string|max:191',
                 'category' => 'nullable|in:individual,business',
                 'mpesa_phone' => 'nullable|string|max:20',
                 'dob' => 'nullable|date',
-                'id_number' => 'nullable|string|max:255',
+                'id_number' => 'nullable|string|max:191',
             ]);
 
             // Create a new customer record
@@ -106,23 +106,16 @@ class CustomerController extends Controller
      */
     public function edit(CustomerModel $customer)
     {
-        $pppoeprofiles = radusergroup::all();
+        $pppoeprofiles = PPPoEService::all();
         // $subscription = ;
         $ipaddress = IPAddressesModel::where('customer_id', $customer->id)->first(); // Fetch all pools
         // Fetch all pools
         $ippools = PoolModel::all();
         $subscriptions = CustomerSubscriptionModel::where('customer_id', $customer->id)->get();
 
-        // $invoices = InvoiceModel::where('customer_id', $customer->id)->get();
-
-        // $payments = paymentModel::where('customer_id', $customer->id)->get();
-
-        // foreach ($invoices as $invoice) {
-        //     $invoice->payments = $payment;
-        // }
-
         // Fetch records with related invoices
-        $records = financerecordsModel::with('recordable')->orderBy('id', 'asc')->get();
+        $records = financerecordsModel::with('recordable')->where('customer_id', $customer->id)->orderBy('id', 'asc')->get();
+        
         // Initialize an array to hold the pools and their IPs
         $poolsWithIps = [];
 
@@ -139,7 +132,7 @@ class CustomerController extends Controller
                 'ips' => $ipaddresses,
             ];
         }
-        $routers=RouterCredential::all();
+        $routers = RouterCredential::all();
 
         return view('customer.edit', compact('customer', 'pppoeprofiles', 'subscriptions', 'ipaddress', 'ippools', 'poolsWithIps', 'routers', 'records'));
     }
@@ -152,29 +145,29 @@ class CustomerController extends Controller
         try {
             // Validate the incoming request data
             $validatedData = $request->validate([
-                'portal_login' => 'required|string|max:255',
-                'portal_password' => 'nullable|string|max:255',
+                'portal_login' => 'required|string|max:191',
+                'portal_password' => 'nullable|string|max:191',
                 'status' => 'required|in:new,active,blocked,inactive',
-                'name' => 'required|string|max:255',
+                'name' => 'required|string|max:191',
                 'email' => 'required|email|unique:customers,email,' . $customer->id,
                 'phone' => 'required|string|max:20',
                 'service_type' => 'nullable|in:recurring,prepaid',
                 'billing_email' => 'nullable|email',
-                'street' => 'nullable|string|max:255',
+                'street' => 'nullable|string|max:191',
                 'zip_code' => 'nullable|string|max:20',
-                'city' => 'nullable|string|max:255',
-                'geo_data' => 'nullable|string|max:255',
+                'city' => 'nullable|string|max:191',
+                'geo_data' => 'nullable|string|max:191',
                 'category' => 'nullable|in:individual,business',
                 'mpesa_phone' => 'nullable|string|max:20',
                 'dob' => 'nullable|date',
-                'id_number' => 'nullable|string|max:255',
+                'id_number' => 'nullable|string|max:191',
             ]);
-            
+
             $radreply = radreply::updateOrCreate(
                 ['username' => $request->portal_login, 'attribute' => 'Mikrotik-Address-List'],
                 ['value' => $request->status === 'active' ? 'MM-allowed-list' : 'MM-blocked-list']
             );
-            
+
             // Update the customer record
             $customer->update($validatedData);
 

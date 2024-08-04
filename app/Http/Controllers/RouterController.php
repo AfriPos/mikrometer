@@ -97,16 +97,16 @@ class RouterController extends Controller
 
             // Validate the incoming request data
             $validatedData = $request->validate([
-                'nasname' => 'required|string|max:255',
+                'nasname' => 'required|string|max:191',
                 'shortname' => 'required|string|max:64',
                 'type' => 'nullable|string|in:other,cisco,computone,livingston,max40xx,multitech,netserver,pathras,patton,portslave,tc,usrhiper,vasexpressaccess',
                 'ports' => 'nullable|integer|min:0',
-                'server' => 'nullable|string|max:255',
-                'community' => 'nullable|string|max:255',
-                'description' => 'nullable|string|max:255',
-                'username' => 'nullable|string|max:255',
-                'password' => 'nullable|string|max:255',
-                'radius_server_ip' => 'required|string|max:255',
+                'server' => 'nullable|string|max:191',
+                'community' => 'nullable|string|max:191',
+                'description' => 'nullable|string|max:191',
+                'username' => 'nullable|string|max:191',
+                'password' => 'nullable|string|max:191',
+                'radius_server_ip' => 'required|string|max:191',
                 'secret' => 'nullable|string|min:6|max:255'
             ]);
 
@@ -200,19 +200,19 @@ class RouterController extends Controller
 
             // Define validation rules
             $rules = [
-                'nasname' => 'required|string|max:255',
+                'nasname' => 'required|string|max:191',
                 'shortname' => 'required|string|max:64',
                 'type' => 'nullable|string|in:other,cisco,computone,livingston,max40xx,multitech,netserver,pathras,patton,portslave,tc,usrhiper,vasexpressaccess',
                 'ports' => 'nullable|integer|min:0',
-                'server' => 'nullable|string|max:255',
-                'community' => 'nullable|string|max:255',
-                'description' => 'nullable|string|max:255',
-                'username' => 'nullable|string|max:255',
-                'password' => 'nullable|string|max:255', // Password is nullable
-                'radius_server_ip' => 'required|string|max:255',
-                'secret' => 'nullable|string|max:255',
+                'server' => 'nullable|string|max:191',
+                'community' => 'nullable|string|max:191',
+                'description' => 'nullable|string|max:191',
+                'username' => 'nullable|string|max:191',
+                'password' => 'nullable|string|max:191', // Password is nullable
+                'radius_server_ip' => 'required|string|max:191',
+                'secret' => 'nullable|string|max:191',
                 'ip_pool' => 'nullable|string',
-                'geo_data' => 'nullable|string|max:255',
+                'geo_data' => 'nullable|string|max:191',
             ];
 
             // Validate the request data
@@ -417,5 +417,4 @@ class RouterController extends Controller
             return response()->json(['status' => false, 'message' => 'Failed to reload RADIUS server', 'error' => implode("\n", $output)]);
         }
     }
-
 }

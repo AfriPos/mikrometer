@@ -1,5 +1,5 @@
 <!-- Create service Modal -->
-<div class="modal fade" id="viewinvoice{{ $invoice->id }}" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="viewinvoice{{ $record->recordable->id }}" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -10,15 +10,15 @@
             <div class="modal-body">
                 <div class="row">
                     <div class="col-3">Invoices to:</div>
-                    <div class="col-3"> {{ $invoice->customer->name }} </div>
+                    <div class="col-3"> {{ $record->recordable->customer->name }} </div>
                     <div class="col-3">Document Date:</div>
-                    <div class="col-3"> {{ $invoice->created_at }} </div>
+                    <div class="col-3"> {{ $record->recordable->created_at }} </div>
                 </div>
                 <div class="row">
                     <div class="col-3">Number:</div>
-                    <div class="col-3"> {{ $invoice->id }} </div>
+                    <div class="col-3"> {{ $record->recordable->id }} </div>
                     <div class="col-3">Due Date:</div>
-                    <div class="col-3"> {{ $invoice->due_date }} </div>
+                    <div class="col-3"> {{ $record->recordable->due_date }} </div>
                 </div>
                 <div class="row">
                     <div class="col-12">
@@ -50,7 +50,7 @@
                                 Total without VAT:
                             </div>
                             <div class="col-sm-6 text-end subtotal">
-                                Ksh {{ $invoice->amount }}
+                                Ksh {{ $record->recordable->amount }}
                             </div>
                         </div>
                         <div class="row">

@@ -22,7 +22,7 @@ class locationsController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'name' => 'required|string|max:255',
+                'name' => 'required|string|max:191',
                 'geodata' => 'required|string',
             ]);
             $coordinates = explode(',', $validatedData['geodata']);
@@ -61,7 +61,7 @@ class locationsController extends Controller
     {
         try {
             $request->validate([
-                'name' => 'required|string|max:255',
+                'name' => 'required|string|max:191',
                 'geodata' => 'nullable|string',
             ]);
 
